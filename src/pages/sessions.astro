@@ -1,0 +1,28 @@
+---
+import SiteLayout from "../layouts/SiteLayout.astro";
+---
+
+<SiteLayout title="Sessions">
+  <h1 class="text-3xl font-semibold">Sessions</h1>
+  <p class="mt-4">
+    This page will explain the available sessions, including their duration,
+    prices and booking options.
+  </p>
+  <section id="communal" class="mt-8">
+    <h2 class="text-xl font-semibold">Communal &amp; Slow Sauna</h2>
+    <p>Details of shared sauna sessions will appear here.</p>
+  </section>
+  <section id="private" class="mt-8">
+    <h2 class="text-xl font-semibold">Private Sauna</h2>
+    <p>Details of private sauna sessions will appear here.</p>
+  </section>
+  <section id="rituals" class="mt-8">
+    <h2 class="text-xl font-semibold">Rituals &amp; Experiences</h2>
+    <p>Details of guided rituals and experiences will appear here.</p>
+  </section>
+  <p class="mt-8">
+    <a href="/book" class="underline">
+      Book a session
+    </a>
+  </p>
+</SiteLayout>

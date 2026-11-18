@@ -1,0 +1,20 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { events } from "../../data/events";
+---
+
+<SiteLayout title="Events">
+  <h1 class="text-3xl font-semibold">Events</h1>
+  <p class="mt-4">
+    Upcoming events and links to their details will appear here.
+  </p>
+  <ul class="mt-4">
+    {events.map((event) => (
+      <li>
+        <a class="underline" href={`/events/${event.slug}`}>
+          {event.title}
+        </a>
+      </li>
+    ))}
+  </ul>
+</SiteLayout>

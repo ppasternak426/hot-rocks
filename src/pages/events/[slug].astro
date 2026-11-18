@@ -1,0 +1,24 @@
+---
+import SiteLayout from "../../layouts/SiteLayout.astro";
+import { events } from "../../data/events";
+export function getStaticPaths() {
+  return events.map((event) => ({
+    params: { slug: event.slug },
+    props: { event },
+  }));
+}
+const { event } = Astro.props;
+---
+
+<SiteLayout title={event.title}>
+  <h1 class="text-3xl font-semibold">{event.title}</h1>
+  <p class="mt-4">{event.description}</p>
+  <p class="mt-4">
+    Further event details and booking information will appear here.
+  </p>
+  <p class="mt-4">
+    <a class="underline" href="/events">
+      Back to events
+    </a>
+  </p>
+</SiteLayout>

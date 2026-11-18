@@ -1,20 +1,15 @@
 ---
-import "../styles/global.css";
+import SiteLayout from "../layouts/SiteLayout.astro";
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Hot Rocks Sauna</title>
-  </head>
-  <body>
-    <main class="mx-auto max-w-3xl p-8">
-      <h1 class="text-3xl font-semibold">Hot Rocks Sauna</h1>
-      <p class="mt-4">The new website is being prepared.</p>
-    </main>
-  </body>
-</html>
+<SiteLayout title="Home">
+  <h1 class="text-3xl font-semibold">The Hot Rocks Sauna</h1>
+  <p class="mt-4">
+    This page will introduce the sauna, sessions, events, owners and location.
+  </p>
+  <p class="mt-4">
+    <a class="underline" href="/sessions">
+      Explore sessions
+    </a>
+  </p>
+</SiteLayout>
