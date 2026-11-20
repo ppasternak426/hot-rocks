@@ -1,16 +1,46 @@
 ---
+import SanityPhoto from "../components/SanityPhoto.astro";
+import { getAboutContent } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const content = await getAboutContent();
 ---
 
-<SiteLayout title="About">
-  <h1 class="text-3xl font-semibold">About</h1>
-  <p class="mt-4">
-    This page will share the story of the owners, the sauna and its
-    surroundings.
-  </p>
-  <p class="mt-4">
-    <a href="/gallery" class="underline">
-      View the gallery
-    </a>
-  </p>
+<SiteLayout
+  title="About Us"
+  description="Meet Jacek and Andrea, the people who built The Hot Rocks Sauna by Lough Neagh."
+>
+  <section class="panel toast" aria-labelledby="about-title">
+    <div class="wrap editorial">
+      <div class="photo photo-corners">
+        <SanityPhoto
+          image={content.photo}
+          maxWidth={960}
+          sizes="(max-width: 42rem) 90vw, 40vw"
+          priority
+          transitionImage
+        />
+      </div>
+      <div class="editorial-copy about-copy">
+        <h1 id="about-title">{content.heading}</h1>
+        {content.story.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+        <div class="actions">
+          <a class="text-link" href="/sessions/#rituals">
+            Explore Guided Rituals
+          </a>
+          <a class="text-link" href="/gallery/">
+            View the Gallery
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 </SiteLayout>
+
+<style>
+  .about-copy h1 + p {
+    margin-block-start: 1rem;
+  }
+</style>

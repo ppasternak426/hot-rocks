@@ -1,8 +1,24 @@
 ---
+import PageIntro from "../components/PageIntro.astro";
+import { termsUrl } from "../data/sauna";
 import SiteLayout from "../layouts/SiteLayout.astro";
 ---
 
-<SiteLayout title="Terms & Conditions">
-  <h1 class="text-3xl font-semibold">Terms &amp; Conditions</h1>
-  <p class="mt-4">The booking terms and sauna rules will appear here.</p>
+<SiteLayout
+  title="Terms & Conditions"
+  description="Find the current sauna rules, booking terms and gift voucher conditions for The Hot Rocks Sauna."
+>
+  <PageIntro
+    title="Terms & Conditions"
+    intro="Read the current sauna rules, booking terms and gift voucher conditions on the Hot Rocks booking site."
+  >
+    <div class="actions">
+      <a class="button" href={termsUrl}>
+        Read the Published Terms
+      </a>
+      <a class="text-link" href="/first-visit/">
+        Plan Your First Visit
+      </a>
+    </div>
+  </PageIntro>
 </SiteLayout>

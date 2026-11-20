@@ -1,10 +1,23 @@
 ---
+import PageIntro from "../components/PageIntro.astro";
+import { getVisitSettings } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const { contactUrl } = await getVisitSettings();
 ---
 
-<SiteLayout title="Privacy Policy">
-  <h1 class="text-3xl font-semibold">Privacy Policy</h1>
-  <p class="mt-4">
-    The privacy policy and information about data processing will appear here.
-  </p>
+<SiteLayout
+  title="Privacy Policy"
+  description="Contact The Hot Rocks Sauna with questions about your personal information."
+>
+  <PageIntro
+    title="Privacy Policy"
+    intro="The privacy policy is being prepared. If you have a question about your personal information, contact The Hot Rocks Sauna."
+  >
+    <div class="actions">
+      <a class="button" href={contactUrl}>
+        Email The Hot Rocks Sauna
+      </a>
+    </div>
+  </PageIntro>
 </SiteLayout>

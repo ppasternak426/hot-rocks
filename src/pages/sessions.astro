@@ -1,28 +1,51 @@
 ---
+import PageIntro from "../components/PageIntro.astro";
+import SanityPhoto from "../components/SanityPhoto.astro";
+import { getSessionCatalog } from "../data/sessions";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const { all: sessions } = await getSessionCatalog();
 ---
 
-<SiteLayout title="Sessions">
-  <h1 class="text-3xl font-semibold">Sessions</h1>
-  <p class="mt-4">
-    This page will explain the available sessions, including their duration,
-    prices and booking options.
-  </p>
-  <section id="communal" class="mt-8">
-    <h2 class="text-xl font-semibold">Communal &amp; Slow Sauna</h2>
-    <p>Details of shared sauna sessions will appear here.</p>
-  </section>
-  <section id="private" class="mt-8">
-    <h2 class="text-xl font-semibold">Private Sauna</h2>
-    <p>Details of private sauna sessions will appear here.</p>
-  </section>
-  <section id="rituals" class="mt-8">
-    <h2 class="text-xl font-semibold">Rituals &amp; Experiences</h2>
-    <p>Details of guided rituals and experiences will appear here.</p>
-  </section>
-  <p class="mt-8">
-    <a href="/book" class="underline">
-      Book a session
-    </a>
-  </p>
+<SiteLayout
+  title="Sauna Sessions"
+  description="Choose a communal or private wood-fired sauna session or a guided ritual at The Hot Rocks Sauna."
+>
+  <PageIntro
+    title="Find your sauna session"
+    intro="Share the heat, book the room for your group or join a guided ritual by Lough Neagh."
+  >
+    <div class="actions">
+      <a class="button" href="/book/">
+        Book a Session
+      </a>
+      <a class="text-link" href="/first-visit/">
+        Plan Your First Visit
+      </a>
+    </div>
+  </PageIntro>
+
+  {sessions.map(({ id, name, description, image }, index) => (
+    <section
+      id={id}
+      class:list={["panel", id === "private" ? "toast" : "paper"]}
+      aria-labelledby={`${id}-title`}
+      tabindex="-1"
+    >
+      <div class="wrap editorial">
+        <div class="photo photo-corners">
+          <SanityPhoto
+            image={image}
+            maxWidth={1000}
+            sizes="(max-width: 42rem) 90vw, (max-width: 80rem) 36vw, 465px"
+            priority={index === 0}
+          />
+        </div>
+        <div class="editorial-copy">
+          <h2 id={`${id}-title`}>{name}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+    </section>
+  ))}
 </SiteLayout>

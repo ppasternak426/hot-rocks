@@ -1,10 +1,382 @@
 ---
+import { Image } from "astro:assets";
+import view from "../assets/home/lough-neagh-sauna.jpg";
+import {
+  bookingSteps,
+  demoCoupon,
+  demoServices,
+  formatSampleDuration,
+  formatSamplePrice,
+  sessionGroups,
+} from "../data/booking-demo";
+import { bookingUrl } from "../data/sauna";
 import SiteLayout from "../layouts/SiteLayout.astro";
+import "../styles/booking.css";
 ---
 
-<SiteLayout title="Book now">
-  <h1 class="text-3xl font-semibold">Book now</h1>
-  <p class="mt-4">
-    Booking details and access to the reservation system will appear here.
-  </p>
+<SiteLayout
+  title="Book a Session"
+  description="Try the Hot Rocks Sauna booking flow with sample availability and prices."
+>
+  <div class="wrap booking-page">
+    <header class="booking-intro">
+      <h1>Book a sauna session</h1>
+      <p>
+        <strong>Booking demo.</strong> Dates, availability and prices are
+        examples. Use sample guest details.
+      </p>
+      <a class="text-link" href={bookingUrl}>
+        Make a real booking on the live site
+      </a>
+    </header>
+
+    <noscript>
+      <p>Enable JavaScript to try the booking demo.</p>
+    </noscript>
+
+    <form id="booking-demo" autocomplete="off" inert>
+      <ol class="booking-progress" aria-label="Booking progress">
+        {bookingSteps.map(({ id, label }, index) => (
+          <li
+            data-booking-progress={id}
+            aria-current={index === 0 ? "step" : undefined}
+          >
+            <span class="booking-progress-number">{index + 1}</span>
+            <span>{label}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div class="booking-layout">
+        <div class="booking-workspace">
+          <fieldset data-booking-step="session" class="booking-step">
+            <legend class="sr-only">Choose a session</legend>
+            <h2 tabindex="-1">Choose a session</h2>
+            <p class="booking-lede">
+              Choose from the sessions on the live booking menu.
+            </p>
+            {sessionGroups.map(({ id, label }) => (
+              <fieldset class="booking-service-group">
+                <legend>{label}</legend>
+                {demoServices
+                  .filter((service) => service.group === id)
+                  .map((service) => (
+                    <label class="booking-service">
+                      <input
+                        type="radio"
+                        name="service"
+                        value={service.id}
+                        required
+                      />
+                      <span class="booking-service-name">
+                        <strong>{service.name}</strong>
+                        <span>
+                          {formatSampleDuration(service.minutes)}
+                          {service.note && <> · {service.note}</>}
+                        </span>
+                      </span>
+                      <span class="booking-price">
+                        <strong>
+                          {formatSamplePrice(service.samplePrice)}
+                        </strong>
+                        <span>per {service.billing}</span>
+                      </span>
+                    </label>
+                  ))}
+              </fieldset>
+            ))}
+          </fieldset>
+
+          <fieldset
+            data-booking-step="time"
+            class="booking-step"
+            hidden
+            disabled
+          >
+            <legend class="sr-only">Choose a date and time</legend>
+            <h2 tabindex="-1">Choose a date and time</h2>
+            <p class="booking-lede">Sample slots are shown in UK time.</p>
+            <p class="booking-picked-service" data-booking-picked-service></p>
+            <div class="booking-field booking-field-short">
+              <label for="booking-guests">Guests</label>
+              <select name="guests" id="booking-guests" required></select>
+            </div>
+            <fieldset class="booking-picker">
+              <legend>Sample dates</legend>
+              <div
+                class="booking-choices booking-dates"
+                data-booking-dates
+              ></div>
+            </fieldset>
+            <fieldset class="booking-picker">
+              <legend>Sample times</legend>
+              <div class="booking-choices" data-booking-times></div>
+              <p role="status" data-booking-times-status>
+                Choose a date to see its times.
+              </p>
+            </fieldset>
+            <p
+              class="booking-error"
+              role="alert"
+              data-booking-slot-error
+              hidden
+            ></p>
+          </fieldset>
+
+          <fieldset
+            data-booking-step="details"
+            class="booking-step"
+            hidden
+            disabled
+          >
+            <legend class="sr-only">Guest details</legend>
+            <h2 tabindex="-1">Guest details</h2>
+            <p class="booking-lede">Use example details to try the form.</p>
+            <button
+              type="button"
+              class="booking-text-button"
+              data-booking-action="sample"
+            >
+              Fill sample details
+            </button>
+            <div class="booking-fields">
+              <div class="booking-field">
+                <label for="booking-name">Full name</label>
+                <input
+                  id="booking-name"
+                  name="full-name"
+                  type="text"
+                  required
+                  maxlength="100"
+                />
+              </div>
+              <div class="booking-field">
+                <label for="booking-email">Email address</label>
+                <input
+                  id="booking-email"
+                  name="email"
+                  type="email"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  required
+                  maxlength="254"
+                />
+              </div>
+              <div class="booking-field">
+                <label for="booking-phone">Phone number</label>
+                <input
+                  id="booking-phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  maxlength="30"
+                />
+              </div>
+              <div class="booking-field">
+                <label for="booking-notes">
+                  Booking notes <small>(optional)</small>
+                </label>
+                <textarea
+                  id="booking-notes"
+                  name="notes"
+                  rows="3"
+                  maxlength="400"
+                ></textarea>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset
+            data-booking-step="review"
+            class="booking-step"
+            hidden
+            disabled
+          >
+            <legend class="sr-only">Review your booking</legend>
+            <h2 tabindex="-1">Review your booking</h2>
+            <p class="booking-lede">
+              Check the details before completing the demo.
+            </p>
+            <section
+              class="booking-review-block"
+              aria-labelledby="review-details"
+            >
+              <h3 id="review-details">Guest details</h3>
+              <p data-booking-guest-summary></p>
+              <p data-booking-guest-notes hidden></p>
+              <button
+                type="button"
+                class="booking-text-button"
+                data-booking-action="details"
+              >
+                Edit guest details
+              </button>
+            </section>
+            <section
+              class="booking-review-block"
+              aria-labelledby="review-coupon"
+            >
+              <h3 id="review-coupon">Coupon</h3>
+              <div class="booking-field">
+                <label for="booking-coupon">
+                  Sample coupon code <small>(optional)</small>
+                </label>
+                <div class="booking-coupon">
+                  <input
+                    id="booking-coupon"
+                    name="coupon"
+                    type="text"
+                    spellcheck="false"
+                    aria-describedby="booking-coupon-hint"
+                    maxlength="24"
+                  />
+                  <button
+                    type="button"
+                    class="booking-secondary"
+                    data-booking-action="coupon"
+                  >
+                    Apply
+                  </button>
+                </div>
+                <p id="booking-coupon-hint">
+                  Try <strong>{demoCoupon}</strong> for a sample discount.
+                </p>
+                <p role="status" data-booking-coupon-status></p>
+              </div>
+            </section>
+            <section
+              class="booking-review-block"
+              aria-labelledby="review-payment"
+            >
+              <h3 id="review-payment">Payment method</h3>
+              <p>
+                <strong>Credit or debit card (Stripe)</strong> · Simulated
+              </p>
+              <p>
+                The demo uses a 25% sample deposit. Card details are simulated.
+              </p>
+              <label class="booking-check">
+                <input type="checkbox" name="pay-full" />
+                <span>Pay the full sample total now</span>
+              </label>
+              <p>
+                Sample amount due now <strong data-booking-due>£0.00</strong>
+              </p>
+            </section>
+            <div class="booking-terms">
+              <label class="booking-check">
+                <input type="checkbox" name="terms" required />
+                <span>I agree to the booking terms for this demo.</span>
+              </label>
+              <a href="/terms/" target="_blank" rel="noopener">
+                Read the booking terms (opens in a new tab)
+              </a>
+            </div>
+          </fieldset>
+
+          <fieldset
+            data-booking-step="complete"
+            class="booking-step"
+            hidden
+            disabled
+          >
+            <legend class="sr-only">Booking demo complete</legend>
+            <h2 tabindex="-1">Booking demo complete</h2>
+            <p class="booking-lede">
+              Your sample booking is ready to review. No reservation or payment
+              was made.
+            </p>
+            <div class="booking-complete-actions">
+              <button
+                type="button"
+                class="booking-secondary"
+                data-booking-action="calendar"
+              >
+                Download sample calendar file
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-booking-action="restart"
+              >
+                Start another demo
+              </button>
+            </div>
+          </fieldset>
+        </div>
+
+        <aside class="booking-summary" aria-labelledby="booking-summary-title">
+          <div class="booking-summary-photo photo-corners">
+            <Image
+              src={view}
+              alt=""
+              widths={[400, 640, 960]}
+              sizes="(min-width: 54rem) 22rem, 90vw"
+              format="webp"
+              class="booking-summary-image"
+            />
+          </div>
+          <div class="booking-summary-body">
+            <h2 id="booking-summary-title" tabindex="-1">
+              Your visit
+            </h2>
+            <p>Gawley’s Gate, Lough Neagh</p>
+            <p class="booking-empty" data-booking-empty>
+              Choose a session to start your sample booking.
+            </p>
+            <ul class="booking-summary-list" data-booking-cart></ul>
+            <p class="booking-draft" data-booking-draft hidden></p>
+            <dl class="booking-totals" data-booking-totals hidden>
+              <div>
+                <dt>Sample subtotal</dt>
+                <dd data-booking-subtotal></dd>
+              </div>
+              <div data-booking-discount-row hidden>
+                <dt>Sample discount</dt>
+                <dd data-booking-discount></dd>
+              </div>
+              <div class="booking-total">
+                <dt>Sample total</dt>
+                <dd data-booking-total></dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              class="booking-text-button"
+              data-booking-action="add"
+              hidden
+            >
+              Add another session
+            </button>
+          </div>
+        </aside>
+        <div class="booking-actions" data-booking-actions>
+          <button
+            type="button"
+            class="booking-text-button"
+            data-booking-action="back"
+            hidden
+          >
+            Back
+          </button>
+          <button type="submit" class="button" data-booking-next>
+            Choose date and time
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <nav class="booking-help" aria-label="Booking help">
+      <a href="/sessions/" class="text-link">
+        Compare sessions
+      </a>
+      <a href="/first-visit/" class="text-link">
+        Plan your first visit
+      </a>
+    </nav>
+  </div>
 </SiteLayout>
+
+<script>
+  import "../scripts/booking-demo";
+</script>

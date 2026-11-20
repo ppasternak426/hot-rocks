@@ -1,0 +1,47 @@
+---
+import type { SitePhoto } from "../data/site-content";
+
+interface Props {
+  image: SitePhoto;
+  sizes: string;
+  maxWidth: number;
+  quality?: number;
+  square?: boolean;
+  priority?: boolean;
+  transitionImage?: boolean;
+}
+
+const {
+  image,
+  sizes,
+  maxWidth,
+  quality,
+  square = false,
+  priority = false,
+  transitionImage,
+} = Astro.props;
+const largest = Math.min(
+  maxWidth,
+  image.width,
+  square ? image.height : image.width,
+);
+const widths = [240, 360, 480, 640, 800, 1200].filter(
+  (width) => width < largest,
+);
+widths.push(largest);
+const urlAt = (width: number) =>
+  `${image.url}?w=${width}${square ? `&h=${width}&fit=crop` : "&fit=max"}&auto=format${quality ? `&q=${quality}` : ""}`;
+---
+
+<img
+  src={urlAt(largest)}
+  srcset={widths.map((width) => `${urlAt(width)} ${width}w`).join(", ")}
+  sizes={sizes}
+  alt={image.alt}
+  width={square ? largest : image.width}
+  height={square ? largest : image.height}
+  loading={priority ? "eager" : "lazy"}
+  fetchpriority={priority ? "high" : undefined}
+  data-transition-image={transitionImage ? "" : undefined}
+  decoding="async"
+/>

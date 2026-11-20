@@ -1,8 +1,79 @@
-export interface Event {
-  slug: string;
-  title: string;
-  description: string;
+import { z } from "astro/zod";
+import { sanityClient } from "sanity:client";
+
+const eventSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  startsAt: z.iso.datetime({ offset: true }),
+  image: z
+    .object({
+      url: z.url(),
+      alt: z.string().trim().min(1),
+      width: z.number().int().positive(),
+      height: z.number().int().positive(),
+    })
+    .nullable(),
+});
+
+type Event = z.infer<typeof eventSchema>;
+
+const eventProjection = `{
+  "slug": slug.current,
+  title,
+  description,
+  startsAt,
+  "image": select(defined(image.asset) => image {
+    alt,
+    "url": asset->url,
+    "width": asset->metadata.dimensions.width,
+    "height": asset->metadata.dimensions.height
+  })
+}`;
+
+const eventsQuery = `*[_type == "event"] | order(dateTime(startsAt) asc) ${eventProjection}`;
+const featuredEventsQuery = `coalesce(
+  *[_id == "homepageEvents" && _type == "homepageEvents"][0]
+    .featuredEvents[0...3][]->${eventProjection},
+  []
+)`;
+
+const eventDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "long",
+  timeStyle: "short",
+  timeZone: "Europe/London",
+});
+
+export function formatEventDate(startsAt: string): string {
+  return eventDateFormatter.format(new Date(startsAt));
 }
 
-// Event content will be added after it has been confirmed by the owners.
-export const events: Event[] = [];
+export async function getPublishedEvents(): Promise<Event[]> {
+  const events = await sanityClient.fetch<unknown>(
+    eventsQuery,
+    {},
+    {
+      perspective: "published",
+    },
+  );
+  return z.array(eventSchema).parse(events);
+}
+
+function upcomingEvents(events: Event[]): Event[] {
+  const now = Date.now();
+  return events.filter(({ startsAt }) => Date.parse(startsAt) >= now);
+}
+
+export async function getUpcomingEvents(): Promise<Event[]> {
+  return upcomingEvents(await getPublishedEvents());
+}
+
+export async function getFeaturedEvents(): Promise<Event[]> {
+  const selection = await sanityClient.fetch<unknown>(
+    featuredEventsQuery,
+    {},
+    { perspective: "published" },
+  );
+  const events = z.array(eventSchema.nullable()).parse(selection);
+  return upcomingEvents(events.filter((event) => event !== null));
+}

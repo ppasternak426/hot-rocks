@@ -1,0 +1,122 @@
+---
+import "../styles/page-transitions.css";
+---
+
+<style is:inline>
+  @media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+      navigation: auto;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    if (!("onpagereveal" in window)) return;
+
+    const storageKey = "hot-rocks:scroll-after-fade";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function prepareVisiblePhoto(transition) {
+      const image = document.querySelector("img[data-transition-image]");
+      if (!image || image.complete) return;
+
+      const { top, bottom } = image.getBoundingClientRect();
+      if (bottom <= 0 || top >= window.innerHeight) return;
+
+      const root = document.documentElement;
+      root.setAttribute("data-waiting-for-page-image", "");
+
+      // Keep the outgoing page visible briefly while the new photo decodes.
+      const deadline = window.setTimeout(resumeFade, 180);
+      function resumeFade() {
+        window.clearTimeout(deadline);
+        root.removeAttribute("data-waiting-for-page-image");
+      }
+      void image.decode().then(resumeFade, resumeFade);
+      void transition.finished.then(resumeFade, resumeFade);
+    }
+
+    window.addEventListener("click", (event) => {
+      if (
+        reducedMotion.matches ||
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        !(event.target instanceof Element)
+      ) {
+        return;
+      }
+
+      const link = event.target.closest("a[href]");
+      if (
+        !link?.hash ||
+        link.origin !== window.location.origin ||
+        (link.pathname === window.location.pathname &&
+          link.search === window.location.search) ||
+        link.hasAttribute("download") ||
+        (link.target && link.target !== "_self")
+      ) {
+        return;
+      }
+
+      try {
+        window.sessionStorage.setItem(storageKey, link.href);
+      } catch {
+        return;
+      }
+
+      // Keeping the fragment out of the navigation prevents an early jump.
+      const destination = new URL(link.href);
+      destination.hash = "";
+      event.preventDefault();
+      window.location.assign(destination.href);
+    });
+
+    window.addEventListener("pagereveal", (event) => {
+      const transition = event.viewTransition;
+      if (transition) prepareVisiblePhoto(transition);
+
+      let link;
+      try {
+        const selection = window.sessionStorage.getItem(storageKey);
+        if (!selection) return;
+        window.sessionStorage.removeItem(storageKey);
+        link = new URL(selection);
+      } catch {
+        return;
+      }
+
+      if (!link.hash) return;
+
+      const destination = new URL(link.href);
+      destination.hash = "";
+      if (destination.href !== window.location.href) return;
+
+      let fragment = link.hash.slice(1);
+      try {
+        fragment = decodeURIComponent(fragment);
+      } catch {
+        // A malformed escape can still be part of a literal element ID.
+      }
+      const target = document.getElementById(fragment);
+      const scrollToTarget = () => {
+        if (window.location.href !== destination.href) return;
+        window.history.replaceState(window.history.state, "", link.href);
+        target?.focus({ preventScroll: true });
+        target?.scrollIntoView({
+          block: "start",
+          behavior: transition && !reducedMotion.matches ? "smooth" : "instant",
+        });
+      };
+      if (transition) {
+        void transition.finished.then(scrollToTarget, scrollToTarget);
+      } else {
+        scrollToTarget();
+      }
+    });
+  })();
+</script>

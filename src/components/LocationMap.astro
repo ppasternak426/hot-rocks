@@ -1,0 +1,69 @@
+---
+import { getVisitSettings } from "../data/site-content";
+
+interface Props {
+  home?: boolean;
+}
+
+const { home = false } = Astro.props;
+const { locationHeading, locationNote, address, directionsUrl } =
+  await getVisitSettings();
+---
+
+<section
+  id={home ? "visit" : "directions"}
+  class="location-section panel"
+  aria-labelledby="location-title"
+  tabindex="-1"
+>
+  <div class:list={["wrap", home && "home-location-layout"]}>
+    <div class="location-heading">
+      <div>
+        <h2 id="location-title">{locationHeading}</h2>
+        <p>{locationNote}</p>
+        {!home && <address>{address}</address>}
+      </div>
+      <div class="actions">
+        {home && (
+          <a class="text-link" href="/visit/">
+            Visit &amp; Contact
+          </a>
+        )}
+        <a class="button" href={directionsUrl}>
+          Get Directions
+        </a>
+      </div>
+    </div>
+    <figure class="location-map">
+      <img
+        src="/gawleys-gate-map.svg"
+        width="840"
+        height="520"
+        alt="The Hot Rocks Sauna is on the south-east shore of Lough Neagh at Gawley’s Gate, west of Belfast and Lisburn and north of Lurgan."
+        loading={home ? "lazy" : "eager"}
+        fetchpriority={home ? undefined : "high"}
+      />
+      <figcaption>
+        Map data from{" "}
+        <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> and{" "}
+        <a href="https://www.naturalearthdata.com/about/">Natural Earth</a>.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<style>
+  @media (min-width: 52rem) and (pointer: fine) {
+    .home-location-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 4fr);
+      align-items: center;
+      gap: clamp(1.5rem, 5vw, 4rem);
+    }
+
+    .home-location-layout .location-heading {
+      display: grid;
+      margin-block-end: 0;
+    }
+  }
+</style>

@@ -1,11 +1,26 @@
 ---
+import PageIntro from "../components/PageIntro.astro";
+import { getVisitSettings } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const { contactUrl } = await getVisitSettings();
 ---
 
-<SiteLayout title="Gift vouchers">
-  <h1 class="text-3xl font-semibold">Gift vouchers</h1>
-  <p class="mt-4">
-    Information about gift vouchers and how to enquire about them will appear
-    here.
-  </p>
+<SiteLayout
+  title="Gift Vouchers"
+  description="Ask The Hot Rocks Sauna about giving a sauna visit as a gift."
+>
+  <PageIntro
+    title="Give a sauna visit"
+    intro="Ask Jacek and Andrea about a Hot Rocks gift voucher for someone you’d like to send to the lough."
+  >
+    <div class="actions">
+      <a class="button" href={contactUrl}>
+        Ask About Gift Vouchers
+      </a>
+      <a class="text-link" href="/terms/">
+        Read the Voucher Terms
+      </a>
+    </div>
+  </PageIntro>
 </SiteLayout>

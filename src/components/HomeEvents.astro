@@ -1,0 +1,185 @@
+---
+import { Image } from "astro:assets";
+import saunaPhoto from "../assets/home/lough-neagh-sauna.jpg";
+import { formatEventDate, getFeaturedEvents } from "../data/events";
+import SanityPhoto from "./SanityPhoto.astro";
+
+const events = await getFeaturedEvents();
+const photoSizes =
+  "(min-width: 52rem) and (pointer: fine) 12rem, (max-width: 36rem) 90vw, 26rem";
+---
+
+{events.length > 0 && (
+  <section
+    id="events"
+    class="home-events panel"
+    aria-labelledby="home-events-title"
+  >
+    <div class="wrap">
+      <div class="home-events-heading">
+        <h2 id="home-events-title">Featured events</h2>
+        <a class="text-link" href="/events/">
+          See all events
+        </a>
+      </div>
+
+      <ul class="home-event-list" data-count={events.length} role="list">
+        {events.map(({ slug, title, startsAt, description, image }) => (
+          <li>
+            <article>
+              <div class="home-event-photo photo-corners">
+                {image ? (
+                  <SanityPhoto
+                    image={image}
+                    maxWidth={864}
+                    sizes={photoSizes}
+                    square
+                  />
+                ) : (
+                  <Image
+                    src={saunaPhoto}
+                    alt="Inside The Hot Rocks Sauna overlooking Lough Neagh"
+                    widths={[400, 864]}
+                    sizes={photoSizes}
+                    format="webp"
+                  />
+                )}
+              </div>
+              <div class="home-event-copy">
+                <h3>
+                  <a href={`/events/${slug}/`}>{title}</a>
+                </h3>
+                <p class="home-event-date">
+                  <time datetime={startsAt}>{formatEventDate(startsAt)}</time>
+                </p>
+                <p class="home-event-description">{description}</p>
+              </div>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+
+<style>
+  .home-events {
+    color: var(--milk);
+    background: var(--espresso);
+  }
+
+  .home-events-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.125rem 1.25rem;
+    border-bottom: 1px solid #6d5145;
+    padding-bottom: 0.75rem;
+  }
+
+  .home-events-heading .text-link {
+    color: var(--honey);
+  }
+
+  .home-event-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    grid-auto-rows: 1fr;
+    gap: clamp(1.5rem, 4vw, 2.75rem);
+    margin-top: clamp(1.5rem, 4vw, 2.75rem);
+  }
+
+  .home-event-list[data-count="1"] {
+    max-inline-size: 26rem;
+  }
+
+  .home-event-list[data-count="2"] {
+    max-inline-size: 54rem;
+  }
+
+  .home-event-list li {
+    min-inline-size: 0;
+    max-inline-size: none;
+    color: var(--milk);
+    overflow-wrap: anywhere;
+  }
+
+  .home-event-list article {
+    block-size: 100%;
+  }
+
+  .home-event-photo {
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--walnut);
+  }
+
+  .home-event-photo img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .home-event-list h3 {
+    margin-top: 0.5rem;
+    font-size: clamp(1.4rem, 2.45vw, 2rem);
+  }
+
+  .home-event-list h3 a {
+    display: inline-flex;
+    min-block-size: 44px;
+    align-items: center;
+    text-underline-offset: 0.16em;
+  }
+
+  .home-event-list h3 a:hover {
+    color: var(--honey);
+  }
+
+  .home-event-date {
+    color: var(--honey);
+    font-weight: 600;
+  }
+
+  .home-event-description {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--oat);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .home-event-date + .home-event-description {
+    margin-top: 0.35rem;
+  }
+
+  @media (min-width: 52rem) and (pointer: fine) {
+    .home-event-list {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    }
+
+    .home-event-list article {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) min(44%, 12rem);
+      align-items: center;
+      gap: clamp(0.75rem, 1.5vw, 1.5rem);
+    }
+
+    .home-event-copy {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .home-event-photo {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .home-event-list h3 {
+      margin-top: 0;
+      font-size: clamp(1.4rem, 1.8vw, 1.75rem);
+    }
+  }
+</style>

@@ -1,15 +1,71 @@
 ---
+import PageIntro from "../components/PageIntro.astro";
+import SanityPhoto from "../components/SanityPhoto.astro";
+import { getGalleryContent } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const { heading, intro, photos } = await getGalleryContent();
 ---
 
-<SiteLayout title="Gallery">
-  <h1 class="text-3xl font-semibold">Gallery</h1>
-  <p class="mt-4">
-    Photos of the sauna, its surroundings and experiences will appear here.
-  </p>
-  <p class="mt-4">
-    <a href="/about" class="underline">
-      More about us
-    </a>
-  </p>
+<SiteLayout
+  title="Gallery"
+  description="See the wood-fired sauna, its hosts and the view over Lough Neagh."
+>
+  <PageIntro title={heading} intro={intro} />
+
+  <div class="wrap gallery">
+    {photos.map((image, index) => (
+      <div class:list={["photo photo-corners", index === 0 && "gallery-wide"]}>
+        <SanityPhoto
+          image={image}
+          maxWidth={index === 0 ? 1600 : 960}
+          sizes={
+            index === 0
+              ? "(max-width: 80rem) 90vw, 1152px"
+              : "(max-width: 42rem) 90vw, 30vw"
+          }
+        />
+      </div>
+    ))}
+    <div class="actions gallery-wide">
+      <a class="text-link" href="/about/">
+        Meet the Hosts
+      </a>
+      <a class="text-link" href="/visit/">
+        Find the Sauna
+      </a>
+    </div>
+  </div>
 </SiteLayout>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    padding-block-end: var(--panel-space);
+  }
+
+  .gallery-wide {
+    grid-column: 1 / -1;
+  }
+
+  .gallery .photo {
+    aspect-ratio: 4 / 5;
+  }
+
+  .gallery .photo.gallery-wide {
+    aspect-ratio: 2.25;
+  }
+
+  @media (max-width: 42rem) {
+    .gallery {
+      grid-template-columns: 1fr;
+    }
+
+    .gallery .photo,
+    .gallery .photo.gallery-wide {
+      aspect-ratio: 1.5;
+    }
+  }
+</style>

@@ -1,0 +1,33 @@
+@media (prefers-reduced-motion: no-preference) {
+  :root:active-view-transition {
+    scroll-behavior: auto;
+  }
+
+  ::view-transition-group(root) {
+    animation: none;
+  }
+
+  ::view-transition-old(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-new(root) {
+    animation: 340ms ease-in-out both page-fade-in;
+    mix-blend-mode: normal;
+  }
+
+  :root[data-waiting-for-page-image]::view-transition-new(root) {
+    animation-play-state: paused;
+  }
+
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
