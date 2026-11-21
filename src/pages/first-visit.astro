@@ -41,7 +41,23 @@ const { heading, intro, questions } = await getFirstVisitContent();
       <div class="ruled-list faq-list">
         {questions.map(({ question, answer }) => (
           <details>
-            <summary>{question}</summary>
+            <summary>
+              {question}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M4.5 10h11" />
+                <path class="faq-plus-vertical" d="M10 4.5v11" />
+              </svg>
+            </summary>
             <p>{answer}</p>
           </details>
         ))}

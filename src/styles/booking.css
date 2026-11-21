@@ -25,7 +25,7 @@
 .booking-progress {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-block: 1px solid var(--line);
+  border-bottom: 1px solid var(--soft-rule);
   margin-bottom: 1.5rem;
 }
 
@@ -53,7 +53,7 @@
 
 .booking-progress [aria-current="step"] {
   color: var(--espresso);
-  box-shadow: inset 0 -3px var(--espresso);
+  box-shadow: inset 0 -2px var(--espresso);
 }
 
 .booking-progress [aria-current="step"] .booking-progress-number {
@@ -111,8 +111,7 @@
 }
 
 .booking-step h3 {
-  font-family: var(--reading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.125rem;
   letter-spacing: normal;
 }
@@ -122,7 +121,7 @@
 }
 
 .booking-service-group + .booking-service-group {
-  margin-top: 1.4rem;
+  margin-top: 1.75rem;
 }
 
 .booking-service-group legend,
@@ -143,7 +142,7 @@
   align-items: start;
   min-height: 52px;
   padding: 0.65rem 0.45rem;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--soft-rule);
   cursor: pointer;
 }
 
@@ -226,7 +225,7 @@
   min-height: 46px;
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--walnut);
-  border-radius: 3px;
+  border-radius: 0.5rem;
   background: var(--oat);
   color: var(--espresso);
   font-size: 1rem;
@@ -244,7 +243,7 @@
 }
 
 .booking-picker + .booking-picker {
-  margin-top: 1.4rem;
+  margin-top: 1.75rem;
 }
 
 .booking-choices {
@@ -260,8 +259,8 @@
   gap: 0.45rem;
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--line);
-  border-radius: 3px;
-  font-weight: 600;
+  border-radius: 999px;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -377,33 +376,14 @@
   margin-inline-start: auto;
 }
 
-.booking-actions .button:disabled {
-  background: var(--toast);
-  color: var(--walnut);
-  cursor: default;
-}
-
-.booking-text-button,
-.booking-secondary {
+.booking-text-button {
   min-height: 44px;
   color: var(--espresso);
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 500;
   cursor: pointer;
-}
-
-.booking-text-button {
   text-decoration-line: underline;
   text-underline-offset: 0.23em;
-}
-
-.booking-secondary {
-  padding: 0.45rem 0.75rem;
-  border: 1px solid var(--walnut);
-  border-radius: 3px;
-}
-
-.booking-secondary:hover {
-  background: var(--toast);
 }
 
 .booking-help {

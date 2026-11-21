@@ -16,7 +16,7 @@ const eventSchema = z.object({
     .nullable(),
 });
 
-type Event = z.infer<typeof eventSchema>;
+export type SaunaEvent = z.infer<typeof eventSchema>;
 
 const eventProjection = `{
   "slug": slug.current,
@@ -48,7 +48,7 @@ export function formatEventDate(startsAt: string): string {
   return eventDateFormatter.format(new Date(startsAt));
 }
 
-export async function getPublishedEvents(): Promise<Event[]> {
+export async function getPublishedEvents(): Promise<SaunaEvent[]> {
   const events = await sanityClient.fetch<unknown>(
     eventsQuery,
     {},
@@ -59,21 +59,12 @@ export async function getPublishedEvents(): Promise<Event[]> {
   return z.array(eventSchema).parse(events);
 }
 
-function upcomingEvents(events: Event[]): Event[] {
-  const now = Date.now();
-  return events.filter(({ startsAt }) => Date.parse(startsAt) >= now);
-}
-
-export async function getUpcomingEvents(): Promise<Event[]> {
-  return upcomingEvents(await getPublishedEvents());
-}
-
-export async function getFeaturedEvents(): Promise<Event[]> {
+export async function getFeaturedEvents(): Promise<SaunaEvent[]> {
   const selection = await sanityClient.fetch<unknown>(
     featuredEventsQuery,
     {},
     { perspective: "published" },
   );
   const events = z.array(eventSchema.nullable()).parse(selection);
-  return upcomingEvents(events.filter((event) => event !== null));
+  return events.filter((event) => event !== null);
 }

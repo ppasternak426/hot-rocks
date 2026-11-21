@@ -1,0 +1,46 @@
+---
+import PageIntro from "../../components/PageIntro.astro";
+import SanityPhoto from "../../components/SanityPhoto.astro";
+import { getSessionCatalog } from "../../data/sessions";
+import SiteLayout from "../../layouts/SiteLayout.astro";
+
+export async function getStaticPaths() {
+  const { all: sessions } = await getSessionCatalog();
+  return sessions.map((session) => ({
+    params: { slug: session.id },
+    props: { session },
+  }));
+}
+
+const { session } = Astro.props;
+---
+
+<SiteLayout title={session.name} description={session.summary}>
+  <PageIntro title={session.name} intro={session.description}>
+    <div class="actions">
+      <a class="button" href={`/book/?session=${session.id}`}>
+        Book this session
+      </a>
+      <a class="text-link text-link-back" href={`/sessions/#${session.id}`}>
+        All Sessions
+      </a>
+    </div>
+  </PageIntro>
+  <div class="panel paper">
+    <div class="wrap">
+      <div class="photo session-detail-photo">
+        <SanityPhoto
+          image={session.image}
+          maxWidth={960}
+          sizes="(max-width: 42rem) 90vw, 42rem"
+        />
+      </div>
+    </div>
+  </div>
+</SiteLayout>
+
+<style>
+  .session-detail-photo {
+    max-inline-size: 42rem;
+  }
+</style>

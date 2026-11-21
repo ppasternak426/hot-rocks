@@ -1,219 +1,158 @@
 .home-hero {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-rows: minmax(min(12rem, 30svh), 1fr) auto;
+  align-items: center;
   min-block-size: calc(
     100svh - var(--site-logo-size) - 2 * var(--site-header-padding)
   );
+  background: var(--espresso);
+  color: var(--milk);
 }
 
-.home-window {
-  position: relative;
-  background: #69503c;
-}
-
-.home-window img {
+.home-hero-photo,
+.home-hero-photo::after {
   position: absolute;
   inset: 0;
+  z-index: -1;
+}
+
+.home-hero-photo img {
   display: block;
-  width: 100%;
-  height: 100%;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: cover;
-  object-position: center 52%;
+  object-position: 54% 50%;
+}
+
+.home-hero-photo::after {
+  z-index: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(43 29 23 / 24%),
+    rgb(43 29 23 / 70%) 42%,
+    rgb(43 29 23 / 73%) 65%,
+    rgb(43 29 23 / 35%)
+  );
+  content: "";
 }
 
 .home-hero-copy {
   display: grid;
   justify-items: center;
-  gap: 0.8rem;
-  padding-block: clamp(1.5rem, 4vw, 3.4rem) clamp(2rem, 4.5vw, 4rem);
+  gap: clamp(1rem, 2.4vw, 1.75rem);
+  padding-block: clamp(3rem, 8svh, 6rem);
   text-align: center;
 }
 
+.home-hero-copy h1 {
+  max-inline-size: 17ch;
+  font-size: clamp(2.65rem, 7.7vw, 6rem);
+  line-height: 0.99;
+}
+
 .home-hero-copy p {
-  font-size: clamp(1.08rem, 1.6vw, 1.25rem);
+  max-inline-size: 44ch;
+  color: var(--milk);
+  font-size: clamp(1.0625rem, 2vw, 1.375rem);
 }
 
 .home-hero-copy .actions {
   justify-content: center;
 }
 
-.home-panel {
-  display: grid;
-  min-block-size: 100svh;
-  align-items: center;
-}
-
-.home-sessions {
-  border-block: 1px solid var(--line);
-}
-
-.home-sessions .intro {
-  margin-block: 0.5rem 1.5rem;
-}
-
-.session-menu {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: 1.5rem clamp(1rem, 4vw, 3rem);
-}
-
-.session-feature .photo {
-  aspect-ratio: 1.62;
-}
-
-.session-feature-link {
-  display: block;
-  padding-block-end: 0.85rem;
-}
-
-.session-link {
+.benefits-preview {
   position: relative;
-  text-decoration-line: none;
-}
-
-.session-link::after {
-  position: absolute;
-  inset: auto 0 0;
-  block-size: 2px;
-  background-color: #9b662d;
-  content: "";
-  opacity: 0;
-  transform: scaleX(0);
-  transform-origin: left;
-  pointer-events: none;
-}
-
-.session-link h3 {
-  text-decoration-line: underline;
-  text-underline-offset: 0.18em;
-}
-
-.session-link:is(:focus-visible, :active)::after {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-@media (hover: hover) {
-  .session-link:hover::after {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .session-link::after {
-    transition:
-      transform 240ms ease-out,
-      opacity 160ms ease-out;
-  }
-}
-
-.session-feature .photo img {
-  object-position: center 56%;
-}
-
-.session-feature h3 {
-  margin-top: 1rem;
-}
-
-.session-menu p {
-  margin-top: 0.35rem;
-}
-
-.session-menu .ruled-list > article {
-  padding-block: 0;
-}
-
-.session-row {
-  padding-block: 0.85rem;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(5rem, 27%);
-  align-items: center;
+  align-items: end;
+  overflow: clip;
+  padding-block: clamp(10.5rem, 46vw, 14.5rem) 2.75rem;
+  background: var(--espresso);
+  color: var(--milk);
+}
+
+.benefits-backdrop,
+.benefits-preview::after {
+  position: absolute;
+  inset: 0;
+}
+
+.benefits-backdrop {
+  z-index: -2;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 27% 38%;
+}
+
+.benefits-preview::after {
+  z-index: -1;
+  background: linear-gradient(0deg, rgb(43 29 23 / 52%), transparent 72%);
+  content: "";
+}
+
+.benefits-panel {
+  max-inline-size: 32rem;
+  margin-inline-start: auto;
+}
+
+.benefit-highlights {
+  margin-block-start: 1.25rem;
+  border-block-start: 1px solid rgb(250 244 233 / 25%);
+}
+
+.benefit-highlights li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.75rem;
+  padding-block: 0.75rem;
+  border-block-end: 1px solid rgb(250 244 233 / 25%);
 }
 
-.session-row .photo {
-  aspect-ratio: 1;
+.benefit-highlight-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: rgb(250 244 233 / 12%);
+  color: var(--honey);
 }
 
-.session-row .photo img {
-  object-position: center 37%;
+.benefit-highlights h3 {
+  margin-block-end: 0.2rem;
+  color: var(--milk);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.35;
 }
 
-.session-link:is(:focus-visible, :active) h3 {
-  color: var(--walnut);
+.benefit-highlights p {
+  font-size: 0.9375rem;
 }
 
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .session-link img {
-    transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+@media (width >= 48rem) {
+  .benefits-preview {
+    min-block-size: clamp(34rem, 48vw, 40rem);
+    padding-block: clamp(2.75rem, 5vw, 4.75rem);
   }
 
-  .session-link:hover img {
-    transform: scale(1.025);
+  .benefits-backdrop {
+    object-position: center 39%;
   }
-}
 
-@media (max-width: 42rem) {
-  .home-window img {
-    object-position: 47% 52%;
+  .home-hero {
+    min-block-size: 100svh;
+  }
+
+  .home-hero-photo img {
+    object-position: 50% 46%;
   }
 
   .home-hero-copy {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .home-hero-copy h1 {
-    text-wrap: initial;
-  }
-
-  .home-hero-copy .actions {
-    justify-content: start;
-  }
-
-  .session-menu {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-height: 32rem) {
-  .home-hero-copy {
-    padding-block: 1rem 1.25rem;
-  }
-}
-
-@keyframes frame-arrives {
-  from {
-    opacity: 0.35;
-    transform: scale(0.72);
-  }
-  to {
-    opacity: 0.96;
-    transform: scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-window::before,
-  .home-window::after {
-    animation: frame-arrives 640ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  @supports (animation-timeline: view()) and
-    (animation-range: entry 0% entry 100%) {
-    .hosts-photo {
-      view-timeline-name: --hosts-in-view;
-    }
-
-    .hosts-photo::before,
-    .hosts-photo::after {
-      animation-name: frame-arrives;
-      animation-duration: auto;
-      animation-timing-function: linear;
-      animation-fill-mode: both;
-      animation-timeline: --hosts-in-view;
-      animation-range: entry 0% entry 100%;
-    }
+    padding-block-start: max(7rem, 13svh);
   }
 }

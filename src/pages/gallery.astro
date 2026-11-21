@@ -15,13 +15,17 @@ const { heading, intro, photos } = await getGalleryContent();
 
   <div class="wrap gallery">
     {photos.map((image, index) => (
-      <div class:list={["photo photo-corners", index === 0 && "gallery-wide"]}>
+      <div
+        class:list={["photo", index === 0 && "gallery-wide"]}
+        data-scroll-reveal={index > 0 ? "" : undefined}
+      >
         <SanityPhoto
           image={image}
           maxWidth={index === 0 ? 1600 : 960}
+          priority={index === 0}
           sizes={
             index === 0
-              ? "(max-width: 80rem) 90vw, 1152px"
+              ? "(max-width: 83rem) 90vw, 1200px"
               : "(max-width: 42rem) 90vw, 30vw"
           }
         />
@@ -42,7 +46,7 @@ const { heading, intro, photos } = await getGalleryContent();
   .gallery {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
+    gap: clamp(1.125rem, 2.4vw, 2rem);
     padding-block-end: var(--panel-space);
   }
 

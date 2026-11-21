@@ -1,49 +1,40 @@
 ---
+import EventCards from "../../components/EventCards.astro";
 import PageIntro from "../../components/PageIntro.astro";
-import { formatEventDate, getUpcomingEvents } from "../../data/events";
+import { getPublishedEvents } from "../../data/events";
 import SiteLayout from "../../layouts/SiteLayout.astro";
 
-const events = await getUpcomingEvents();
+const events = await getPublishedEvents();
 ---
 
 <SiteLayout
   title="Events"
-  description="See upcoming events at The Hot Rocks Sauna at Gawley’s Gate."
+  description="Explore past and upcoming events at The Hot Rocks Sauna at Gawley’s Gate."
 >
   <PageIntro
     title="Events at Hot Rocks"
     intro={
       events.length
-        ? "Find out what’s coming up at Gawley’s Gate."
+        ? "Explore past and upcoming events at Gawley’s Gate."
         : "There are no events listed at the moment. You can still explore our guided rituals and sauna sessions."
     }
   >
-    <div class="actions">
-      {events.length === 0 && (
+    {events.length === 0 && (
+      <div class="actions">
         <a class="button" href="/sessions/#rituals">
           Explore Guided Rituals
         </a>
-      )}
-    </div>
+      </div>
+    )}
   </PageIntro>
 
   {events.length > 0 && (
     <section class="panel paper" aria-labelledby="events-title">
       <div class="wrap">
-        <h2 id="events-title">Upcoming events</h2>
-        <ul class="ruled-list mt-5">
-          {events.map(({ slug, title, description, startsAt }) => (
-            <li>
-              <h3>
-                <a href={`/events/${slug}/`}>{title}</a>
-              </h3>
-              <p class="mt-2">
-                <time datetime={startsAt}>{formatEventDate(startsAt)}</time>
-              </p>
-              <p class="mt-2">{description}</p>
-            </li>
-          ))}
-        </ul>
+        <div class="section-heading">
+          <h2 id="events-title">All events</h2>
+        </div>
+        <EventCards events={events} />
       </div>
     </section>
   )}

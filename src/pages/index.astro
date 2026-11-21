@@ -1,17 +1,28 @@
 ---
+import { Image } from "astro:assets";
+import saunaBenefitsPhoto from "../assets/home/sauna-benefits-ritual.jpeg";
+import saunaInterior from "../assets/home/sauna-interior.jpg";
+import FeatureCard from "../components/FeatureCard.astro";
 import HomeEvents from "../components/HomeEvents.astro";
 import LocationMap from "../components/LocationMap.astro";
 import SanityPhoto from "../components/SanityPhoto.astro";
+import { benefitHighlights } from "../data/sauna-benefits";
 import { getHomeContent } from "../data/site-content";
 import { getSessionCatalog } from "../data/sessions";
 import SiteLayout from "../layouts/SiteLayout.astro";
 import "../styles/home.css";
+import "../styles/photo-overlay-card.css";
 
-const [content, catalog] = await Promise.all([
+const [content, { featured }] = await Promise.all([
   getHomeContent(),
   getSessionCatalog(),
 ]);
-const [featured, ...otherSessions] = catalog.featured;
+const benefitIcons = {
+  moon: "M20 15.2A8.4 8.4 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z",
+  pulse: "M3 12h4l2.5-5 4 10L16 12h5",
+  movement:
+    "M13 5a1.5 1.5 0 1 0 0 .01M5 10l4-2 4 3 5-.5M10 9l-2 5 4 2 1 4M8 14l-3 4H3",
+};
 ---
 
 <SiteLayout
@@ -19,105 +30,130 @@ const [featured, ...otherSessions] = catalog.featured;
   description="Visit The Hot Rocks Sauna at Gawley’s Gate. Explore communal and private wood-fired sauna sessions and guided rituals by Lough Neagh."
 >
   <section class="home-hero" aria-labelledby="home-title">
-    <div class="home-window photo-corners">
-      <SanityPhoto
-        image={content.photo}
-        maxWidth={1600}
-        quality={72}
-        sizes="100vw"
+    <div class="home-hero-photo">
+      <Image
+        src={saunaInterior}
+        alt="Wooden benches inside The Hot Rocks Sauna"
+        widths={[480, 720, 960, 1201]}
+        sizes="max(100vw, 75svh)"
+        format="webp"
+        quality={78}
         priority
-        transitionImage
+        data-transition-image=""
       />
     </div>
     <div class="wrap home-hero-copy">
       <h1 id="home-title">{content.heading}</h1>
       <p>{content.intro}</p>
       <div class="actions">
-        <a class="button" href="/book/">
+        <a class="button button-light" href="/book/">
           Book a Session
         </a>
-        <a class="text-link" href={featured ? "#sessions" : "/sessions/"}>
+        <a
+          class="text-link"
+          href={featured.length ? "#sessions" : "/sessions/"}
+        >
           Explore Sessions
         </a>
       </div>
     </div>
   </section>
 
-  {featured && (
+  {featured.length > 0 && (
     <section
       id="sessions"
-      class="home-sessions home-panel panel paper"
+      class="panel paper"
       aria-labelledby="sessions-title"
       tabindex="-1"
     >
       <div class="wrap">
-        <h2 id="sessions-title">{content.sessionsHeading}</h2>
-        <p class="intro">{content.sessionsIntro}</p>
-        <div class="session-menu">
-          <article class="session-feature">
-            <a
-              class="session-link session-feature-link"
-              href={`/sessions/#${featured.id}`}
-              aria-labelledby="featured-session-title"
-            >
-              <div class="photo photo-corners">
-                <SanityPhoto
-                  image={featured.image}
-                  maxWidth={1200}
-                  sizes="(max-width: 42rem) 90vw, (max-width: 80rem) 48vw, 610px"
-                />
-              </div>
-              <h3 id="featured-session-title" class="link-label">
-                {featured.name}
-              </h3>
-              <p>{featured.summary}</p>
-            </a>
-          </article>
+        <div class="section-heading">
           <div>
-            <div class="ruled-list">
-              {otherSessions.map((session) => (
-                <article>
-                  <a
-                    class="session-link session-row"
-                    href={`/sessions/#${session.id}`}
-                    aria-labelledby={`choice-${session.id}`}
-                  >
-                    <div>
-                      <h3 id={`choice-${session.id}`} class="link-label">
-                        {session.name}
-                      </h3>
-                      <p>{session.summary}</p>
-                    </div>
-                    <div class="photo photo-corners">
-                      <SanityPhoto
-                        image={session.image}
-                        maxWidth={400}
-                        sizes="(max-width: 42rem) 25vw, 160px"
-                      />
-                    </div>
-                  </a>
-                </article>
-              ))}
-            </div>
-            <a class="text-link" href="/sessions/">
-              See All Session Details
-            </a>
+            <h2 id="sessions-title">{content.sessionsHeading}</h2>
+            <p>{content.sessionsIntro}</p>
           </div>
+          <a class="text-link" href="/sessions/">
+            See All Session Details
+          </a>
         </div>
+        <ul class="feature-grid" role="list">
+          {featured.map(({ id, name, summary, image }) => (
+            <FeatureCard
+              href={`/sessions/${id}/`}
+              headingId={
+                id === featured[0]?.id
+                  ? "featured-session-title"
+                  : `choice-${id}`
+              }
+              title={name}
+              description={summary}
+              image={image}
+            />
+          ))}
+        </ul>
       </div>
     </section>
   )}
 
+  <LocationMap variant="home-intro" />
+
   <HomeEvents />
 
   <section
-    id="about"
-    class="panel toast"
-    aria-labelledby="hosts-title"
-    tabindex="-1"
+    id="benefits"
+    class="panel benefits-preview"
+    aria-labelledby="benefits-title"
   >
+    <Image
+      class="benefits-backdrop"
+      src={saunaBenefitsPhoto}
+      alt=""
+      widths={[800, 1120, 1440, 1600]}
+      sizes="max(100vw, 68rem)"
+      format="webp"
+      quality={80}
+      data-scroll-reveal
+    />
+    <div class="wrap">
+      <div class="editorial-copy benefits-panel photo-overlay-card">
+        <h2 id="benefits-title">Sauna benefits</h2>
+        <ul class="benefit-highlights" role="list">
+          {benefitHighlights.map(({ icon, title, summary }) => (
+            <li>
+              <span class="benefit-highlight-icon" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path d={benefitIcons[icon]} />
+                </svg>
+              </span>
+              <div>
+                <h3>{title}</h3>
+                <p>{summary}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div class="actions">
+          <a class="text-link" href="/benefits/">
+            Explore benefits and take the quiz
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="panel" aria-labelledby="hosts-title" tabindex="-1">
     <div class="wrap editorial">
-      <div class="photo photo-corners hosts-photo">
+      <div class="photo hosts-photo" data-scroll-reveal>
         <SanityPhoto
           image={content.hostsPhoto}
           maxWidth={960}
@@ -131,13 +167,8 @@ const [featured, ...otherSessions] = catalog.featured;
           <a class="text-link" href="/about/">
             Read Their Story
           </a>
-          <a class="text-link" href="/first-visit/">
-            Plan Your First Visit
-          </a>
         </div>
       </div>
     </div>
   </section>
-
-  <LocationMap home />
 </SiteLayout>

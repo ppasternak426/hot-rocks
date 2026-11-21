@@ -56,9 +56,6 @@ export async function getSessionCatalog() {
 
   return {
     featured,
-    all: [
-      ...featured,
-      ...sessions.filter((session) => !selectedIds.includes(session._id)),
-    ],
+    all: sessions,
   };
 }

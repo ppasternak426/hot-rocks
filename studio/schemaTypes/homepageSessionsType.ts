@@ -9,7 +9,7 @@ export const homepageSessionsType = defineType({
       name: 'featuredSessions',
       title: 'Featured sessions',
       description:
-        'Choose up to three published sessions and drag to reorder them. The first session gets the large card on the homepage. All published sessions appear on the Sessions page.',
+        'Choose up to three published sessions and drag to set their order on the homepage. All published sessions appear on the Sessions page.',
       type: 'array',
       of: [
         defineArrayMember({

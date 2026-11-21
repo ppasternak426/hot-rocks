@@ -468,6 +468,15 @@ function initialiseBooking(form: HTMLFormElement) {
     }
   });
 
+  const requestedSession = new URLSearchParams(window.location.search).get(
+    "session",
+  );
+  if (requestedSession) {
+    setRadio("service", requestedSession);
+    const service = currentService();
+    if (service) setGuests(service);
+  }
+
   show("session", false);
   form.inert = false;
 }

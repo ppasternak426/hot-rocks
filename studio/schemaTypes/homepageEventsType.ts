@@ -9,7 +9,7 @@ export const homepageEventsType = defineType({
       name: 'featuredEvents',
       title: 'Featured events',
       description:
-        'Choose up to three events and drag to set their order. The first event leads the homepage section. Only published, upcoming events appear on the site.',
+        'Choose up to three published events and drag to set their order on the homepage. Selected events stay featured after their date until you remove them here.',
       type: 'array',
       of: [
         defineArrayMember({

@@ -1,0 +1,11 @@
+.photo-overlay-card {
+  padding: clamp(1.125rem, 3.6vw, 2.5rem);
+  border: 1px solid rgb(250 244 233 / 24%);
+  border-radius: var(--photo-radius);
+  background: rgb(43 29 23 / 77%);
+  backdrop-filter: blur(18px);
+}
+
+.photo-overlay-card p {
+  color: var(--milk);
+}

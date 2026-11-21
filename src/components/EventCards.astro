@@ -1,0 +1,24 @@
+---
+import { formatEventDate, type SaunaEvent } from "../data/events";
+import FeatureCard from "./FeatureCard.astro";
+
+interface Props {
+  events: readonly SaunaEvent[];
+}
+
+const { events } = Astro.props;
+---
+
+<ul class="feature-grid" role="list">
+  {events.map(({ slug, title, description, startsAt, image }) => (
+    <FeatureCard
+      href={`/events/${slug}/`}
+      headingId={`event-card-${slug}`}
+      title={title}
+      description={description}
+      image={image}
+    >
+      <time datetime={startsAt}>{formatEventDate(startsAt)}</time>
+    </FeatureCard>
+  ))}
+</ul>

@@ -1,0 +1,122 @@
+.feature-grid {
+  --card-gap: clamp(1rem, 2.4vw, 1.75rem);
+  --cards-per-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--card-gap);
+}
+
+@media (width > 42rem) {
+  .feature-grid {
+    --cards-per-row: 2;
+  }
+}
+
+@media (width > 60rem) {
+  .feature-grid {
+    --cards-per-row: 3;
+  }
+}
+
+.feature-grid > .feature-card {
+  flex: 0 0
+    calc((100% + var(--card-gap)) / var(--cards-per-row) - var(--card-gap));
+  min-inline-size: 0;
+  max-inline-size: none;
+  color: var(--milk);
+}
+
+.feature-card article {
+  block-size: 100%;
+}
+
+.feature-card-link {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  overflow: hidden;
+  border-radius: var(--photo-radius);
+  background: var(--espresso);
+  color: var(--milk);
+  text-decoration: none;
+}
+
+.feature-card-link:focus-visible {
+  outline-color: var(--espresso);
+}
+
+.feature-card-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--walnut);
+}
+
+.feature-card-media img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.feature-card-media::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 52%, var(--espresso));
+  content: "";
+  pointer-events: none;
+}
+
+.feature-card-content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-block-start: -0.75rem;
+  padding: 0 1.25rem 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.feature-card-content h3 {
+  font-size: clamp(1.45rem, 3vw, 2rem);
+}
+
+.feature-card-content p {
+  margin-block-end: 0.4rem;
+  color: var(--oat);
+}
+
+.feature-card-content time {
+  color: var(--honey);
+  font-size: 0.875rem;
+}
+
+.feature-card-arrow {
+  margin-block-start: auto;
+  color: var(--honey);
+}
+
+.feature-card-link:is(:hover, :focus-visible) h3 {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+@media (width <= 42rem) {
+  .feature-card-media {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .feature-card-media img {
+    transition: transform 300ms ease-out;
+  }
+
+  .feature-card-link:hover img {
+    transform: scale(1.025);
+  }
+}

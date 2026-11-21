@@ -1,0 +1,44 @@
+---
+import { Image } from "astro:assets";
+import saunaPhoto from "../assets/home/lough-neagh-sauna.jpg";
+import type { SitePhoto } from "../data/site-content";
+import SanityPhoto from "./SanityPhoto.astro";
+import "../styles/feature-cards.css";
+
+interface Props {
+  href: string;
+  title: string;
+  headingId: string;
+  description: string;
+  image: SitePhoto | null;
+}
+
+const { href, title, headingId, description, image } = Astro.props;
+const sizes = "(max-width: 42rem) 90vw, (max-width: 60rem) 45vw, 26rem";
+---
+
+<li class="feature-card" data-scroll-reveal>
+  <article>
+    <a class="feature-card-link" href={href} aria-labelledby={headingId}>
+      <div class="feature-card-media">
+        {image ? (
+          <SanityPhoto image={image} maxWidth={800} sizes={sizes} />
+        ) : (
+          <Image
+            src={saunaPhoto}
+            alt=""
+            widths={[360, 480, 640, 800]}
+            sizes={sizes}
+            format="webp"
+          />
+        )}
+      </div>
+      <div class="feature-card-content">
+        <h3 id={headingId}>{title}</h3>
+        <slot />
+        <p>{description}</p>
+        <span class="feature-card-arrow" aria-hidden="true"></span>
+      </div>
+    </a>
+  </article>
+</li>

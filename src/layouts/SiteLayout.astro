@@ -1,7 +1,6 @@
 ---
 import { getImage } from "astro:assets";
-import literataUrl from "../assets/fonts/literata.woff2?url";
-import sourceSansUrl from "../assets/fonts/source-sans-3.woff2?url";
+import instrumentSansUrl from "../assets/fonts/instrument-sans.woff2?url";
 import logo from "../assets/home/hot-rocks-logo.webp";
 import sharingPhoto from "../assets/home/lough-neagh-sauna.jpg";
 import PageTransitions from "../components/PageTransitions.astro";
@@ -104,22 +103,22 @@ const footerLinks = [
       currentPath === "/about") && (
       <link rel="preconnect" href="https://cdn.sanity.io" />
     )}
-    {[literataUrl, sourceSansUrl].map((href) => (
-      <link
-        rel="preload"
-        href={href}
-        as="font"
-        type="font/woff2"
-        crossorigin="anonymous"
-      />
-    ))}
+    <link
+      rel="preload"
+      href={instrumentSansUrl}
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
     <PageTransitions />
   </head>
   <body>
     <a href="#main-content" class="skip-link">
       Skip to content
     </a>
-    <header class="site-header">
+    <header
+      class:list={["site-header", currentPath === "/" && "site-header-home"]}
+    >
       <div class="wrap site-header-inner">
         <a
           href="/"
@@ -129,7 +128,7 @@ const footerLinks = [
         >
           <img src={logo.src} width="58" height="58" alt="" />
         </a>
-        <nav class="site-nav" aria-label="Main navigation">
+        <nav class="site-nav site-header-nav" aria-label="Main navigation">
           <ul>
             {navigation.map(({ href, label }) => (
               <li>
@@ -195,5 +194,8 @@ const footerLinks = [
         </div>
       </div>
     </footer>
+    <script>
+      import "../scripts/scroll-reveal";
+    </script>
   </body>
 </html>
