@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import SanityPhoto from "../components/SanityPhoto.astro";
 import { getAboutContent } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
@@ -27,10 +28,10 @@ const content = await getAboutContent();
           <p>{paragraph}</p>
         ))}
         <div class="actions">
-          <a class="text-link" href="/sessions/#rituals">
+          <a class="text-link" href={sitePath("/sessions/#rituals")}>
             Explore guided rituals
           </a>
-          <a class="text-link" href="/gallery/">
+          <a class="text-link" href={sitePath("/gallery/")}>
             View the gallery
           </a>
         </div>

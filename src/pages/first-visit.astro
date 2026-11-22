@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import PageIntro from "../components/PageIntro.astro";
 import { getFirstVisitContent } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
@@ -12,10 +13,10 @@ const { heading, intro, questions } = await getFirstVisitContent();
 >
   <PageIntro title={heading} intro={intro}>
     <div class="actions">
-      <a class="button" href="/sessions/">
+      <a class="button" href={sitePath("/sessions/")}>
         Explore sessions
       </a>
-      <a class="text-link" href="/visit/#directions">
+      <a class="text-link" href={sitePath("/visit/#directions")}>
         Find us
       </a>
     </div>
@@ -48,7 +49,7 @@ const { heading, intro, questions } = await getFirstVisitContent();
           </details>
         ))}
       </div>
-      <a class="text-link mt-3" href="/visit/#contact">
+      <a class="text-link mt-3" href={sitePath("/visit/#contact")}>
         Ask us a question
       </a>
     </div>
@@ -60,7 +61,7 @@ const { heading, intro, questions } = await getFirstVisitContent();
         Check the sauna rules and booking terms before you reserve a session.
       </p>
       <div class="actions">
-        <a class="text-link" href="/terms/">
+        <a class="text-link" href={sitePath("/terms/")}>
           Read the sauna rules
         </a>
       </div>

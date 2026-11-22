@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import PageIntro from "../components/PageIntro.astro";
 import { termsUrl } from "../data/sauna";
 import SiteLayout from "../layouts/SiteLayout.astro";
@@ -16,7 +17,7 @@ import SiteLayout from "../layouts/SiteLayout.astro";
       <a class="button" href={termsUrl}>
         Read the published terms
       </a>
-      <a class="text-link" href="/first-visit/">
+      <a class="text-link" href={sitePath("/first-visit/")}>
         Plan your first visit
       </a>
     </div>

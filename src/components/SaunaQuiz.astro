@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import { saunaQuiz } from "../data/sauna-benefits";
 ---
 
@@ -111,7 +112,7 @@ import { saunaQuiz } from "../data/sauna-benefits";
         <button class="text-link quiz-reset" type="button" data-restart>
           Play again
         </button>
-        <a class="text-link" href="/sessions/">
+        <a class="text-link" href={sitePath("/sessions/")}>
           Explore sauna sessions
         </a>
       </div>

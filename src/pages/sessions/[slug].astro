@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../../data/site-path";
 import PageIntro from "../../components/PageIntro.astro";
 import SanityPhoto from "../../components/SanityPhoto.astro";
 import {
@@ -49,10 +50,13 @@ if (paragraphs.length === 1 && sentences.length >= 4) {
         .join(" · ")}
     </p>
     <div class="actions">
-      <a class="button" href={`/book/?session=${session.id}`}>
+      <a class="button" href={sitePath(`/book/?session=${session.id}`)}>
         Book this session
       </a>
-      <a class="text-link text-link-back" href={`/sessions/#${session.id}`}>
+      <a
+        class="text-link text-link-back"
+        href={sitePath(`/sessions/#${session.id}`)}
+      >
         All sessions
       </a>
     </div>

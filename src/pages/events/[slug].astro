@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../../data/site-path";
 import PageIntro from "../../components/PageIntro.astro";
 import { formatEventDate, getPublishedEvents } from "../../data/events";
 import SiteLayout from "../../layouts/SiteLayout.astro";
@@ -20,10 +21,10 @@ const { event } = Astro.props;
       <time datetime={event.startsAt}>{formatEventDate(event.startsAt)}</time>
     </p>
     <div class="actions">
-      <a class="text-link text-link-back" href="/events/">
+      <a class="text-link text-link-back" href={sitePath("/events/")}>
         Back to events
       </a>
-      <a class="text-link" href="/visit/#contact">
+      <a class="text-link" href={sitePath("/visit/#contact")}>
         Ask about this event
       </a>
     </div>

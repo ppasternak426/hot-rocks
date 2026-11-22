@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import PageIntro from "../components/PageIntro.astro";
 import SiteLayout from "../layouts/SiteLayout.astro";
 ---
@@ -13,13 +14,13 @@ import SiteLayout from "../layouts/SiteLayout.astro";
     intro="This link may have moved. You can still plan your visit to the sauna."
   >
     <div class="actions">
-      <a class="button" href="/sessions/">
+      <a class="button" href={sitePath("/sessions/")}>
         Explore sessions
       </a>
-      <a class="text-link" href="/book/">
+      <a class="text-link" href={sitePath("/book/")}>
         Book a session
       </a>
-      <a class="text-link" href="/visit/">
+      <a class="text-link" href={sitePath("/visit/")}>
         Find us
       </a>
     </div>

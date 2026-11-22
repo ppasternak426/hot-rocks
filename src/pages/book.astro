@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import { Image } from "astro:assets";
 import view from "../assets/home/lough-neagh-sauna.jpg";
 import {
@@ -301,7 +302,7 @@ import "../styles/booking.css";
                 <input type="checkbox" name="terms" required />
                 <span>I agree to the booking terms for this demo.</span>
               </label>
-              <a href="/terms/" target="_blank" rel="noopener">
+              <a href={sitePath("/terms/")} target="_blank" rel="noopener">
                 Read the booking terms (opens in a new tab)
               </a>
             </div>
@@ -400,10 +401,10 @@ import "../styles/booking.css";
     </form>
 
     <nav class="booking-help" aria-label="Booking help">
-      <a href="/sessions/" class="text-link">
+      <a href={sitePath("/sessions/")} class="text-link">
         Compare sessions
       </a>
-      <a href="/first-visit/" class="text-link">
+      <a href={sitePath("/first-visit/")} class="text-link">
         Plan your first visit
       </a>
     </nav>

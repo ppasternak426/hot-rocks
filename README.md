@@ -37,6 +37,10 @@ Open [Sanity Studio](http://localhost:3333/) and sign in with a Sanity account t
 - Verify the webhook on the deployed redesign by publishing an approved edit, checking that the host completes a fresh build, and confirming the resulting public content. A homepage featured selection should appear in precisely the order set in Studio.
 - Serve Astro’s generated `404.html` with HTTP 404 for missing routes. Configure a permanent host redirect from `/about-us/` to `/sessions/` if supported. The static build also includes a redirect page.
 
+### GitHub Pages preview
+
+Build with `bun run build --site https://ppasternak426.github.io --base /hot-rocks` for the `/hot-rocks/` path. Publish the contents of `dist/` and an empty `.nojekyll` file to the root of the `gh-pages` branch. The preview is a snapshot of the published Sanity content at build time.
+
 ## Project context
 
 - [Agent instructions](AGENTS.md)

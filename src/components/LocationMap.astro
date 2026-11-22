@@ -1,4 +1,5 @@
 ---
+import { sitePath } from "../data/site-path";
 import { Image } from "astro:assets";
 import sunset from "../assets/home/lough-neagh-sunset.jpeg";
 import { getVisitSettings } from "../data/site-content";
@@ -56,13 +57,13 @@ const settings = await getVisitSettings();
       </div>
       {home && (
         <div class="actions">
-          <a class="button button-light" href="/visit/">
+          <a class="button button-light" href={sitePath("/visit/")}>
             Find us
           </a>
-          <a class="text-link" href="/first-visit/">
+          <a class="text-link" href={sitePath("/first-visit/")}>
             First visit
           </a>
-          <a class="text-link" href="/visit/#contact">
+          <a class="text-link" href={sitePath("/visit/#contact")}>
             Contact us
           </a>
         </div>
@@ -71,7 +72,7 @@ const settings = await getVisitSettings();
     {!home && (
       <figure class="location-map">
         <img
-          src="/gawleys-gate-map.svg"
+          src={sitePath("/gawleys-gate-map.svg")}
           width="840"
           height="520"
           alt="The Hot Rocks Sauna is on the south-east shore of Lough Neagh at Gawley’s Gate, west of Belfast and Lisburn and north of Lurgan."
