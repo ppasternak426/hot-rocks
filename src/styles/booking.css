@@ -220,7 +220,8 @@
 
 .booking-field input,
 .booking-field select,
-.booking-field textarea {
+.booking-field textarea,
+.booking-guests-trigger {
   width: 100%;
   min-height: 46px;
   padding: 0.55rem 0.65rem;
@@ -229,6 +230,69 @@
   background: var(--oat);
   color: var(--espresso);
   font-size: 1rem;
+}
+
+.booking-guests-trigger:not([hidden]) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-inline-end: 0.95rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.booking-guests-trigger[aria-expanded="true"] svg {
+  rotate: 180deg;
+}
+
+.booking-guests-options {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--milk);
+  color: var(--espresso);
+  box-shadow: 0 0.375rem 1rem rgb(43 29 23 / 14%);
+}
+
+.booking-guests-options [role="option"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding-inline: 0.65rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.booking-guests-options [aria-selected="true"] {
+  background: var(--toast);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .booking-guests-options [role="option"]:hover:not([aria-selected="true"]) {
+    background: var(--oat);
+  }
+}
+
+.booking-guests-options [role="option"]:focus-visible {
+  outline-offset: -2px;
+}
+
+.booking-guests-options [aria-selected="true"]::after {
+  inline-size: 0.35rem;
+  block-size: 0.65rem;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  rotate: 45deg;
+  content: "";
 }
 
 .booking-field textarea {

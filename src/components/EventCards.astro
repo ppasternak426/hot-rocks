@@ -4,9 +4,11 @@ import FeatureCard from "./FeatureCard.astro";
 
 interface Props {
   events: readonly SaunaEvent[];
+  showPastStatus?: boolean;
 }
 
-const { events } = Astro.props;
+const { events, showPastStatus = false } = Astro.props;
+const now = Date.now();
 ---
 
 <ul class="feature-grid" role="list">
@@ -19,6 +21,7 @@ const { events } = Astro.props;
       image={image}
     >
       <time datetime={startsAt}>{formatEventDate(startsAt)}</time>
+      {showPastStatus && Date.parse(startsAt) < now && <span>Past event</span>}
     </FeatureCard>
   ))}
 </ul>

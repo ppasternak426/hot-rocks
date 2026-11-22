@@ -12,9 +12,10 @@ import "../styles/global.css";
 interface Props {
   title: string;
   description: string;
+  noindex?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, noindex = false } = Astro.props;
 const { contactEmail, phoneInternational, postalAddress, socialProfiles } =
   await getVisitSettings();
 const currentPath = Astro.url.pathname.replace(/\/$/, "") || "/";
@@ -48,16 +49,20 @@ const business = {
 };
 const navigation = [
   { href: "/sessions/", label: "Sessions" },
-  { href: "/first-visit/", label: "First Visit" },
-  { href: "/visit/", label: "Find Us" },
+  { href: "/first-visit/", label: "First visit" },
+  { href: "/gallery/", label: "Gallery" },
+  { href: "/visit/", label: "Find us" },
 ];
 const footerLinks = [
   { href: "/about/", label: "About" },
   { href: "/gallery/", label: "Gallery" },
   { href: "/events/", label: "Events" },
-  { href: "/gift-vouchers/", label: "Gift Vouchers" },
-  { href: "/terms/", label: "Terms & Conditions" },
-  { href: "/privacy/", label: "Privacy Policy" },
+  { href: "/benefits/", label: "Sauna benefits" },
+  { href: "/gift-vouchers/", label: "Gift vouchers" },
+];
+const legalLinks = [
+  { href: "/terms/", label: "Terms & conditions" },
+  { href: "/privacy/", label: "Privacy policy" },
 ];
 ---
 
@@ -69,7 +74,11 @@ const footerLinks = [
     <meta name="theme-color" content="#2b1d17" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonicalUrl} />
+    {noindex ? (
+      <meta name="robots" content="noindex" />
+    ) : (
+      <link rel="canonical" href={canonicalUrl} />
+    )}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={siteName} />
     <meta property="og:locale" content="en_GB" />
@@ -160,11 +169,11 @@ const footerLinks = [
             href="/book/"
             aria-current={currentPath === "/book" ? "page" : undefined}
           >
-            Book a Session
+            Book a session
           </a>
         </div>
         <div class="site-footer-bottom">
-          <nav class="site-nav site-footer-nav" aria-label="Footer navigation">
+          <nav class="site-nav site-footer-nav" aria-label="Explore Hot Rocks">
             <ul>
               {footerLinks.map(({ href, label }) => (
                 <li>
@@ -192,6 +201,22 @@ const footerLinks = [
             </ul>
           </nav>
         </div>
+        <nav class="site-nav site-footer-legal" aria-label="Legal">
+          <ul>
+            {legalLinks.map(({ href, label }) => (
+              <li>
+                <a
+                  href={href}
+                  aria-current={
+                    currentPath === href.slice(0, -1) ? "page" : undefined
+                  }
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </footer>
     <script>

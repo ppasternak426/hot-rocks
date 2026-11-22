@@ -1,6 +1,10 @@
 ---
 import PageIntro from "../../components/PageIntro.astro";
 import SanityPhoto from "../../components/SanityPhoto.astro";
+import {
+  onRequestSessionId,
+  sessionComparison,
+} from "../../data/session-comparison";
 import { getSessionCatalog } from "../../data/sessions";
 import SiteLayout from "../../layouts/SiteLayout.astro";
 
@@ -13,34 +17,94 @@ export async function getStaticPaths() {
 }
 
 const { session } = Astro.props;
+const isByRequest = session.id === onRequestSessionId;
+const facts = sessionComparison[session.id];
+const paragraphs = session.description.trim().split(/\n+/);
+const sentences = Array.from(
+  new Intl.Segmenter("en-GB", { granularity: "sentence" }).segment(
+    paragraphs[0],
+  ),
+  ({ segment }) => segment,
+);
+if (paragraphs.length === 1 && sentences.length >= 4) {
+  const midpoint = Math.ceil(sentences.length / 2);
+  paragraphs.splice(
+    0,
+    1,
+    sentences.slice(0, midpoint).join("").trim(),
+    sentences.slice(midpoint).join("").trim(),
+  );
+}
 ---
 
 <SiteLayout title={session.name} description={session.summary}>
-  <PageIntro title={session.name} intro={session.description}>
+  <PageIntro title={session.name} intro={session.summary}>
+    <p class="session-detail-facts">
+      {[
+        facts?.duration,
+        facts?.format,
+        isByRequest ? "By enquiry" : "Book online",
+      ]
+        .filter(Boolean)
+        .join(" · ")}
+    </p>
     <div class="actions">
       <a class="button" href={`/book/?session=${session.id}`}>
         Book this session
       </a>
       <a class="text-link text-link-back" href={`/sessions/#${session.id}`}>
-        All Sessions
+        All sessions
       </a>
     </div>
   </PageIntro>
-  <div class="panel paper">
-    <div class="wrap">
+  <section class="panel paper" aria-labelledby="session-story-title">
+    <div class="wrap session-story">
+      <div class="session-story-copy">
+        <h2 id="session-story-title">What to expect</h2>
+        {paragraphs.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+      </div>
       <div class="photo session-detail-photo">
         <SanityPhoto
           image={session.image}
           maxWidth={960}
-          sizes="(max-width: 42rem) 90vw, 42rem"
+          sizes="(max-width: 52rem) 90vw, (max-width: 83rem) 40vw, 32rem"
         />
       </div>
     </div>
-  </div>
+  </section>
 </SiteLayout>
 
 <style>
+  .session-detail-facts {
+    color: var(--walnut);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .session-story {
+    display: grid;
+    align-items: start;
+    gap: clamp(1.5rem, 5vw, 4rem);
+  }
+
+  .session-story-copy {
+    max-inline-size: 65ch;
+  }
+
+  .session-story-copy p {
+    margin-block-start: 0.75rem;
+    line-height: 1.65;
+  }
+
   .session-detail-photo {
     max-inline-size: 42rem;
+  }
+
+  @media (width > 52rem) {
+    .session-story {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    }
   }
 </style>

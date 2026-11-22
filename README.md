@@ -33,7 +33,9 @@ Open [Sanity Studio](http://localhost:3333/) and sign in with a Sanity account t
 
 - Build the website from the repository root with `bun run build` and publish the root `dist/` directory.
 - To publish the editor to Sanity hosting, run `bun run deploy` from `studio/` while signed in. This deploys the Studio and its schema separately from Astro.
-- Publishing content in Studio takes effect on the public site after the next Astro build. A Sanity webhook can trigger that build through the site host.
+- Publishing content in Studio takes effect on the public site after the next Astro build and deployment. Once a site host is selected, connect its production deploy hook to a Sanity webhook for create, update and delete events in the `production` dataset. Filter out drafts and keep the deploy-hook URL in Sanity webhook settings.
+- Verify the webhook on the deployed redesign by publishing an approved edit, checking that the host completes a fresh build, and confirming the resulting public content. A homepage featured selection should appear in precisely the order set in Studio.
+- Serve Astro’s generated `404.html` with HTTP 404 for missing routes. Configure a permanent host redirect from `/about-us/` to `/sessions/` if supported. The static build also includes a redirect page.
 
 ## Project context
 

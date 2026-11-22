@@ -13,7 +13,7 @@ import { saunaQuiz } from "../data/sauna-benefits";
   <noscript>
     <p>
       The quiz needs JavaScript.{" "}
-      <a href="#sauna-research">Read about the research below.</a>
+      <a href="#sauna-research">Read about the benefits.</a>
     </p>
   </noscript>
   <hot-rocks-quiz>
@@ -103,26 +103,18 @@ import { saunaQuiz } from "../data/sauna-benefits";
       <h3 tabindex="-1">
         You got <span data-score></span> out of {saunaQuiz.length}
       </h3>
-      <p data-distance></p>
+      <p data-result-feedback></p>
       <div class="actions">
-        <button class="button" type="button" data-share hidden>
-          Challenge a friend
-        </button>
-        <button class="button" type="button" data-copy>
-          Copy challenge link
-        </button>
+        <a class="text-link" href="#sauna-research" data-result-reading hidden>
+          Read about the benefits
+        </a>
         <button class="text-link quiz-reset" type="button" data-restart>
           Play again
         </button>
+        <a class="text-link" href="/sessions/">
+          Explore sauna sessions
+        </a>
       </div>
-      <p data-share-status role="status"></p>
-      <label data-link-fallback hidden>
-        Copy this link to share the quiz
-        <input type="url" readonly />
-      </label>
-      <a class="text-link" href="/sessions/">
-        Explore sauna sessions
-      </a>
     </div>
   </hot-rocks-quiz>
 </section>
@@ -224,20 +216,6 @@ import { saunaQuiz } from "../data/sauna-benefits";
     background: var(--oat);
   }
 
-  [data-link-fallback] {
-    display: grid;
-    gap: 0.25rem;
-  }
-
-  [data-link-fallback] input {
-    inline-size: 100%;
-    min-block-size: 44px;
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding-inline: 0.5rem;
-    background: var(--milk);
-  }
-
   .quiz-sources {
     margin-block-start: 0.25rem;
   }
@@ -247,18 +225,9 @@ import { saunaQuiz } from "../data/sauna-benefits";
     margin-block-start: 1rem;
   }
 
-  .quiz-reveal .actions .button {
-    margin-block-start: 0;
-  }
-
   .quiz-reset {
     text-decoration: underline;
     text-underline-offset: 0.23em;
-  }
-
-  [data-share-status]:not(:empty),
-  [data-link-fallback] {
-    margin-block-start: 0.75rem;
   }
 
   @media (min-width: 64rem) {

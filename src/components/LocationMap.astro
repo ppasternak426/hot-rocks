@@ -13,7 +13,7 @@ const settings = await getVisitSettings();
 ---
 
 <section
-  id={home ? "visit" : "directions"}
+  id={home ? "visit" : undefined}
   class:list={["location-section panel", home && "location-section-home"]}
   aria-labelledby="location-title"
   tabindex="-1"
@@ -30,27 +30,43 @@ const settings = await getVisitSettings();
     />
   )}
   <div class="wrap">
-    <div class="location-heading">
+    <div
+      class="location-heading"
+      id={home ? "contact" : undefined}
+      tabindex={home ? -1 : undefined}
+    >
       <div>
         <h2 id="location-title">
           {home ? "Plan your visit" : settings.locationHeading}
         </h2>
         <p>{settings.locationNote}</p>
-        {!home && <address>{settings.address}</address>}
-      </div>
-      <div class="actions">
-        <a
-          class:list={["button", home && "button-light"]}
-          href={home ? "/visit/" : settings.directionsUrl}
-        >
-          {home ? "Find us" : "Get Directions"}
-        </a>
-        {home && (
-          <a class="text-link" href="/first-visit/">
-            First Visit
-          </a>
+        {!home && (
+          <>
+            {settings.arrivalNotes && <p>{settings.arrivalNotes}</p>}
+            {!settings.arrivalNotes && (
+              <p>
+                <a href="#contact">
+                  Ask us about parking, changing facilities or step-free access
+                </a>
+                .
+              </p>
+            )}
+          </>
         )}
       </div>
+      {home && (
+        <div class="actions">
+          <a class="button button-light" href="/visit/">
+            Find us
+          </a>
+          <a class="text-link" href="/first-visit/">
+            First visit
+          </a>
+          <a class="text-link" href="/visit/#contact">
+            Contact us
+          </a>
+        </div>
+      )}
     </div>
     {!home && (
       <figure class="location-map">

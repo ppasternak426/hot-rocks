@@ -12,12 +12,27 @@ const photoSchema = z.object({
 
 export type SitePhoto = z.infer<typeof photoSchema>;
 
-const photoProjection = `{
+const photoFields = `
   alt,
   "url": asset->url,
   "width": asset->metadata.dimensions.width,
   "height": asset->metadata.dimensions.height
-}`;
+`;
+const photoProjection = `{ ${photoFields} }`;
+
+const saunaBenefitsSchema = z.object({
+  intro: text,
+  heading: text,
+  topics: z
+    .array(
+      z.object({
+        title: text,
+        body: text,
+        sources: z.array(z.object({ label: text, href: httpsUrl })).min(1),
+      }),
+    )
+    .min(1),
+});
 
 const firstVisitSchema = z.object({
   heading: text,
@@ -29,6 +44,7 @@ const visitSchema = z.object({
   intro: text,
   locationHeading: text,
   locationNote: text,
+  arrivalNotes: text.nullish(),
   contactNote: text,
   postalAddress: z.object({
     streetAddress: text,
@@ -67,7 +83,7 @@ const aboutSchema = z.object({
 const gallerySchema = z.object({
   heading: text,
   intro: text,
-  photos: z.array(photoSchema).min(1),
+  photos: z.array(photoSchema.extend({ caption: text.nullish() })).min(1),
 });
 
 async function fetchContent(id: string, projection: string) {
@@ -82,6 +98,10 @@ async function fetchContent(id: string, projection: string) {
   }
 
   return data;
+}
+
+export async function getSaunaBenefitsContent() {
+  return saunaBenefitsSchema.parse(await fetchContent("saunaBenefits", ""));
 }
 
 export async function getFirstVisitContent() {
@@ -133,7 +153,7 @@ export async function getGalleryContent() {
   return gallerySchema.parse(
     await fetchContent(
       "photoGallery",
-      `{ heading, intro, photos[] ${photoProjection} }`,
+      `{ heading, intro, photos[] { caption, ${photoFields} } }`,
     ),
   );
 }

@@ -15,28 +15,35 @@ const { heading, intro, photos } = await getGalleryContent();
 
   <div class="wrap gallery">
     {photos.map((image, index) => (
-      <div
-        class:list={["photo", index === 0 && "gallery-wide"]}
+      <figure
+        class:list={[index === 0 && "gallery-wide"]}
         data-scroll-reveal={index > 0 ? "" : undefined}
       >
-        <SanityPhoto
-          image={image}
-          maxWidth={index === 0 ? 1600 : 960}
-          priority={index === 0}
-          sizes={
-            index === 0
-              ? "(max-width: 83rem) 90vw, 1200px"
-              : "(max-width: 42rem) 90vw, 30vw"
-          }
-        />
-      </div>
+        <div class="photo">
+          <SanityPhoto
+            image={
+              image.caption && image.caption !== image.alt
+                ? image
+                : { ...image, alt: "" }
+            }
+            maxWidth={index === 0 ? 1600 : 960}
+            priority={index === 0}
+            sizes={
+              index === 0
+                ? "(max-width: 83rem) 90vw, 1200px"
+                : "(max-width: 42rem) 90vw, 30vw"
+            }
+          />
+        </div>
+        <figcaption>{image.caption ?? image.alt}</figcaption>
+      </figure>
     ))}
     <div class="actions gallery-wide">
       <a class="text-link" href="/about/">
-        Meet the Hosts
+        Meet the hosts
       </a>
       <a class="text-link" href="/visit/">
-        Find the Sauna
+        Find the sauna
       </a>
     </div>
   </div>
@@ -58,8 +65,14 @@ const { heading, intro, photos } = await getGalleryContent();
     aspect-ratio: 4 / 5;
   }
 
-  .gallery .photo.gallery-wide {
+  .gallery-wide .photo {
     aspect-ratio: 2.25;
+  }
+
+  .gallery figcaption {
+    margin-block-start: 0.65rem;
+    color: var(--walnut);
+    line-height: 1.5;
   }
 
   @media (max-width: 42rem) {
@@ -68,7 +81,7 @@ const { heading, intro, photos } = await getGalleryContent();
     }
 
     .gallery .photo,
-    .gallery .photo.gallery-wide {
+    .gallery-wide .photo {
       aspect-ratio: 1.5;
     }
   }

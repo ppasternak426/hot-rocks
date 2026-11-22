@@ -1,0 +1,27 @@
+---
+import PageIntro from "../components/PageIntro.astro";
+import SiteLayout from "../layouts/SiteLayout.astro";
+---
+
+<SiteLayout
+  title="Page not found"
+  description="Find sessions, booking and directions for The Hot Rocks Sauna."
+  noindex
+>
+  <PageIntro
+    title="Page not found"
+    intro="This link may have moved. You can still plan your visit to the sauna."
+  >
+    <div class="actions">
+      <a class="button" href="/sessions/">
+        Explore sessions
+      </a>
+      <a class="text-link" href="/book/">
+        Book a session
+      </a>
+      <a class="text-link" href="/visit/">
+        Find us
+      </a>
+    </div>
+  </PageIntro>
+</SiteLayout>

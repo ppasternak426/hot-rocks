@@ -9,6 +9,8 @@ export default defineConfig({
   site: "https://thehotrockssauna.co.uk",
   redirects: {
     "/home": "/",
+    "/booking-demo": "/book/",
+    "/about-us": "/sessions/",
   },
   integrations: [
     sanity({

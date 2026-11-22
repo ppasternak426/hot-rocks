@@ -1,44 +1,33 @@
 ---
 import SaunaQuiz from "../components/SaunaQuiz.astro";
-import { benefitTopics, saunaQuiz } from "../data/sauna-benefits";
+import { getSaunaBenefitsContent } from "../data/site-content";
 import SiteLayout from "../layouts/SiteLayout.astro";
+
+const { intro, heading, topics } = await getSaunaBenefitsContent();
 ---
 
 <SiteLayout
   title="Sauna Benefits & Quiz"
-  description={`How well do you know sauna research? Answer ${saunaQuiz.length} questions about sleep, blood pressure and long-term studies in The Hot Rocks Sauna Quiz.`}
+  description="Explore the warmth, quiet and everyday comforts of a sauna by Lough Neagh, then try the Hot Rocks Sauna Quiz."
 >
-  <div class="wrap benefits">
-    <div class="quiz-intro-layout">
-      <header class="benefits-intro">
-        <h1>Sauna benefits</h1>
-        <p>
-          Explore what sauna studies tell us about sleep, blood pressure and
-          long-term health.
-        </p>
-        <a class="text-link" href="#sauna-research">
-          Skip to the research
-        </a>
-      </header>
-
-      <SaunaQuiz />
-    </div>
-  </div>
+  <header class="wrap benefits-intro">
+    <h1>Sauna benefits</h1>
+    <p>{intro}</p>
+  </header>
   <div class="paper research-band">
     <section
       id="sauna-research"
       class="wrap research"
       aria-labelledby="sauna-research-title"
+      tabindex="-1"
     >
-      <h2 id="sauna-research-title">What researchers have studied</h2>
-      {benefitTopics.map(({ title, paragraphs, sources }) => (
+      <h2 id="sauna-research-title">{heading}</h2>
+      {topics.map(({ title, body, sources }) => (
         <article>
           <h3>{title}</h3>
-          {paragraphs.map((paragraph) => (
-            <p>{paragraph}</p>
-          ))}
+          <p>{body}</p>
           <details>
-            <summary>Study sources</summary>
+            <summary>Study links</summary>
             <ul>
               {sources.map(({ href, label }) => (
                 <li>
@@ -53,24 +42,16 @@ import SiteLayout from "../layouts/SiteLayout.astro";
       ))}
     </section>
   </div>
+  <div class="wrap benefits-quiz">
+    <SaunaQuiz />
+  </div>
 </SiteLayout>
 
 <style>
-  .benefits {
+  .benefits-intro,
+  .benefits-quiz {
     max-inline-size: 64rem;
-    padding-block: clamp(1.75rem, 5vw, 4.5rem) var(--panel-space);
-  }
-
-  .quiz-intro-layout {
-    display: grid;
-    gap: clamp(1rem, 3vw, 2.5rem);
-    align-items: start;
-  }
-
-  @media (min-width: 58rem) {
-    .quiz-intro-layout {
-      grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
-    }
+    padding-block: clamp(1.75rem, 5vw, 4.5rem);
   }
 
   .benefits-intro p {

@@ -1,0 +1,259 @@
+---
+import { getFeaturedOpinions } from "../data/opinions";
+
+const opinions = await getFeaturedOpinions();
+const allSamples = opinions.every(({ isSample }) => isSample);
+---
+
+{opinions.length > 0 && (
+  <section id="opinions" class="panel paper" aria-labelledby="opinions-title">
+    <div class="wrap">
+      <div class="section-heading">
+        <div>
+          <h2 id="opinions-title">Featured opinions</h2>
+          {allSamples && <p>Fictional examples of guest opinions.</p>}
+        </div>
+      </div>
+      <div class="opinion-carousel" data-opinion-carousel>
+        {opinions.length > 1 && (
+          <button
+            class="opinion-arrow opinion-arrow-previous"
+            type="button"
+            aria-label="Previous opinion"
+            aria-controls="opinion-list"
+            data-opinion-step="-1"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 12H5m6-6-6 6 6 6" />
+            </svg>
+          </button>
+        )}
+        <div class="opinion-viewport" data-scroll-reveal>
+          <ul id="opinion-list" class="opinion-grid" role="list">
+            {opinions.map(({ title, quote, authorName, isSample }) => (
+              <li class="opinion-card" data-opinion-card>
+                <figure>
+                  {title && <h3>{title}</h3>}
+                  {isSample && !allSamples && (
+                    <p class="opinion-sample">Fictional example</p>
+                  )}
+                  <blockquote>
+                    <p>“{quote}”</p>
+                  </blockquote>
+                  {authorName && <figcaption>{authorName}</figcaption>}
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {opinions.length > 1 && (
+          <button
+            class="opinion-arrow opinion-arrow-next"
+            type="button"
+            aria-label="Next opinion"
+            aria-controls="opinion-list"
+            data-opinion-step="1"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14m-6-6 6 6-6 6" />
+            </svg>
+          </button>
+        )}
+      </div>
+      <p class="sr-only" role="status" data-opinion-status></p>
+    </div>
+  </section>
+)}
+
+<script>
+  const carousel = document.querySelector<HTMLElement>(
+    "[data-opinion-carousel]",
+  );
+  const track = carousel?.querySelector<HTMLElement>(".opinion-grid");
+  const status = carousel?.parentElement?.querySelector(
+    "[data-opinion-status]",
+  );
+  const cards = Array.from(
+    carousel?.querySelectorAll("[data-opinion-card]") ?? [],
+  );
+  const previous = carousel?.querySelector('[data-opinion-step="-1"]');
+  const next = carousel?.querySelector('[data-opinion-step="1"]');
+
+  if (carousel && track && status && previous && next && cards.length > 1) {
+    const mobile = window.matchMedia("(width <= 44rem)");
+    const desktop = window.matchMedia("(width >= 60rem)");
+    let first = 0;
+
+    const update = (step: number) => {
+      const visible = desktop.matches ? 3 : mobile.matches ? 1 : 2;
+      const last = Math.max(0, cards.length - visible);
+      const target = Math.max(0, Math.min(first + step, last));
+      const changed = first !== target;
+      first = target;
+
+      track.style.setProperty("--first-card", String(first));
+      carousel.toggleAttribute("data-can-slide", last > 0);
+      previous.setAttribute("aria-disabled", String(first === 0));
+      next.setAttribute("aria-disabled", String(first === last));
+      cards.forEach((card, index) => {
+        card.toggleAttribute(
+          "inert",
+          index < first || index >= first + visible,
+        );
+      });
+
+      if (changed && step) {
+        const end = Math.min(first + visible, cards.length);
+        status.textContent =
+          visible === 1
+            ? `Opinion ${first + 1} of ${cards.length}`
+            : `Opinions ${first + 1} to ${end} of ${cards.length}`;
+      }
+    };
+
+    previous.addEventListener("click", () => update(-1));
+    next.addEventListener("click", () => update(1));
+    mobile.addEventListener("change", () => update(0));
+    desktop.addEventListener("change", () => update(0));
+    update(0);
+  }
+</script>
+
+<style>
+  .opinion-grid {
+    --visible-cards: 2;
+    --card-gap: clamp(0.75rem, 2.4vw, 1.75rem);
+    display: grid;
+    grid-template-columns: repeat(var(--visible-cards), minmax(0, 1fr));
+    gap: var(--card-gap);
+  }
+
+  .opinion-card h3 {
+    margin-block-end: 0.65rem;
+    color: var(--espresso);
+    font-size: clamp(1.35rem, 2vw, 1.65rem);
+  }
+
+  .opinion-grid > .opinion-card {
+    max-inline-size: none;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid var(--line);
+    border-radius: var(--photo-radius);
+    background: var(--milk);
+    overflow-wrap: anywhere;
+  }
+
+  .opinion-card blockquote {
+    color: var(--espresso);
+    font-size: clamp(1.125rem, 2vw, 1.375rem);
+  }
+
+  .opinion-card figcaption,
+  .opinion-sample {
+    color: var(--walnut);
+    font-size: 0.875rem;
+  }
+
+  .opinion-card figcaption {
+    margin-block-start: 0.75rem;
+  }
+
+  .opinion-sample {
+    margin-block-end: 0.75rem;
+    font-weight: 600;
+  }
+
+  .opinion-arrow {
+    display: none;
+  }
+
+  [data-can-slide] {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(0.375rem, 1.5vw, 1.25rem);
+  }
+
+  [data-can-slide] .opinion-viewport {
+    overflow: clip;
+  }
+
+  [data-can-slide] .opinion-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc(
+      (100% + var(--card-gap)) / var(--visible-cards) - var(--card-gap)
+    );
+    transform: translateX(
+      calc(
+        -1 * var(--first-card, 0) * (100% + var(--card-gap)) /
+          var(--visible-cards)
+      )
+    );
+  }
+
+  [data-can-slide] .opinion-arrow {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--milk);
+    color: var(--espresso);
+    cursor: pointer;
+  }
+
+  .opinion-arrow[aria-disabled="true"] {
+    color: var(--walnut);
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .opinion-arrow:not([aria-disabled="true"]):is(:hover, :focus-visible) {
+    border-color: var(--espresso);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    [data-can-slide] .opinion-grid {
+      transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  }
+
+  @media (width >= 60rem) {
+    .opinion-grid {
+      --visible-cards: 3;
+    }
+  }
+
+  @media (width <= 44rem) {
+    .opinion-grid {
+      --visible-cards: 1;
+    }
+
+    [data-can-slide] {
+      margin-inline: calc(-1 * (var(--gutter) - 0.5rem));
+    }
+  }
+</style>

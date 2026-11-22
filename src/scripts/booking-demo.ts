@@ -6,6 +6,7 @@ import {
   demoTimes,
   formatSamplePrice,
 } from "../data/booking-demo";
+import { enhanceGuestSelector } from "./booking-guests";
 
 type Service = (typeof demoServices)[number];
 type Step = (typeof bookingSteps)[number]["id"] | "complete";
@@ -130,6 +131,7 @@ function initialiseBooking(form: HTMLFormElement) {
   const next = get<HTMLButtonElement>("[data-booking-next]");
   const back = get<HTMLButtonElement>('[data-booking-action="back"]');
   const guests = get<HTMLSelectElement>("#booking-guests");
+  const updateGuestOptions = enhanceGuestSelector(guests);
   const dates = get<HTMLElement>("[data-booking-dates]");
   const times = get<HTMLElement>("[data-booking-times]");
   const timeStatus = get<HTMLElement>("[data-booking-times-status]");
@@ -186,6 +188,7 @@ function initialiseBooking(form: HTMLFormElement) {
     );
     guests.replaceChildren(...options);
     guests.value = String(value);
+    updateGuestOptions?.();
   }
 
   function renderTimes(chosenTime?: string) {
@@ -321,7 +324,10 @@ function initialiseBooking(form: HTMLFormElement) {
     setRadio("service", reservation?.service.id);
     setRadio("day", reservation ? String(reservation.day) : undefined);
     if (reservation) setGuests(reservation.service, reservation.guests);
-    else guests.replaceChildren();
+    else {
+      guests.replaceChildren();
+      updateGuestOptions?.();
+    }
     renderTimes(reservation?.time);
   }
 
@@ -479,6 +485,36 @@ function initialiseBooking(form: HTMLFormElement) {
 
   show("session", false);
   form.inert = false;
+
+  if (requestedSession && currentService()) {
+    const centerSelectedSession = () => {
+      void document.fonts.ready.then(() => {
+        requestAnimationFrame(() => {
+          if (active !== "session" || selected("service") !== requestedSession)
+            return;
+
+          const row = form
+            .querySelector('input[name="service"]:checked')
+            ?.closest(".booking-service");
+          if (!row) return;
+
+          const { top, height } = row.getBoundingClientRect();
+          window.scrollBy({
+            top: top + (height - window.innerHeight) / 2,
+            behavior: "instant",
+          });
+        });
+      });
+    };
+
+    if (document.readyState === "complete") {
+      centerSelectedSession();
+    } else {
+      window.addEventListener("pageshow", centerSelectedSession, {
+        once: true,
+      });
+    }
+  }
 }
 
 const form = document.querySelector("form#booking-demo");

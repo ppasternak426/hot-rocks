@@ -35,6 +35,14 @@ export const saunaSessionType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'bookingUrl',
+      title: 'Direct booking URL',
+      description:
+        'Use a live booking form configured for this session. Leave blank to use the general booking form.',
+      type: 'url',
+      validation: (rule) => rule.uri({scheme: ['https']}),
+    }),
+    defineField({
       name: 'image',
       type: 'image',
       validation: (rule) => rule.required().assetRequired(),

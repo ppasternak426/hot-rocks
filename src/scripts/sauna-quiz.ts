@@ -1,71 +1,28 @@
 import { saunaQuiz } from "../data/sauna-benefits";
 
+const resultMessages = [
+  "Thanks for giving it a go. Follow your curiosity and explore the benefits, from winding down in the warmth to taking a breather by the lough.",
+  "Nice work. You’ve already picked up something about sauna, and there’s always another little detail to take away.",
+  "Lovely work. That was a good mix of familiar ground and things worth getting curious about.",
+  "You nailed it. Thanks for following your curiosity all the way through. A well-earned moment to sit back and unwind.",
+];
+
 class HotRocksQuiz extends HTMLElement {
   connectedCallback(): void {
     const rounds = [...this.querySelectorAll<HTMLElement>("[data-round]")];
     const result = this.querySelector<HTMLElement>("[data-result]");
     const scoreDisplay = this.querySelector("[data-score]");
-    const distanceDisplay = this.querySelector("[data-distance]");
-    const share = this.querySelector<HTMLButtonElement>("[data-share]");
-    const shareStatus = this.querySelector("[data-share-status]");
-    const fallback = this.querySelector<HTMLElement>("[data-link-fallback]");
-    const fallbackInput = fallback?.querySelector("input");
-
-    if (
-      !result ||
-      !scoreDisplay ||
-      !distanceDisplay ||
-      !share ||
-      !shareStatus ||
-      !fallback ||
-      !fallbackInput
-    ) {
-      return;
-    }
+    const resultFeedback = result?.querySelector("[data-result-feedback]");
+    const readingLink = result?.querySelector<HTMLElement>(
+      "[data-result-reading]",
+    );
+    if (!result || !scoreDisplay || !resultFeedback || !readingLink) return;
 
     let score = 0;
-    let pressureDistance = 0;
-    const quizUrl = new URL("/benefits/#sauna-quiz", location.origin).href;
-    share.hidden = typeof navigator.share !== "function";
-
-    const copyLink = async (): Promise<void> => {
-      try {
-        await navigator.clipboard.writeText(quizUrl);
-        fallback.hidden = true;
-        shareStatus.textContent = "Challenge link copied.";
-      } catch {
-        shareStatus.textContent = "";
-        fallback.hidden = false;
-        fallbackInput.value = quizUrl;
-        fallbackInput.focus();
-        fallbackInput.select();
-      }
-    };
-
-    this.querySelector("[data-copy]")?.addEventListener("click", () => {
-      void copyLink();
-    });
-
-    share.addEventListener("click", async () => {
-      try {
-        await navigator.share({
-          title: "The Hot Rocks Sauna Quiz",
-          text: `I got ${score} out of ${saunaQuiz.length}. How close can you get?`,
-          url: quizUrl,
-        });
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          await copyLink();
-        }
-      }
-    });
 
     this.querySelector("[data-restart]")?.addEventListener("click", () => {
       score = 0;
-      pressureDistance = 0;
       result.hidden = true;
-      shareStatus.textContent = "";
-      fallback.hidden = true;
       for (const [index, round] of rounds.entries()) {
         round.hidden = index !== 0;
         const form = round.querySelector("form");
@@ -99,15 +56,18 @@ class HotRocksQuiz extends HTMLElement {
         switch (round.kind) {
           case "choice": {
             const guess = guesses.get("guess");
-            if (guess === round.correct) score++;
-            feedback.textContent = `Your guess was ${String(guess).toLowerCase()}.`;
+            const correct = guess === round.correct;
+            if (correct) score++;
+            feedback.textContent = `${correct ? "Nicely guessed!" : "Thanks for giving it a go."} You picked ${String(guess).toLowerCase()}.`;
             break;
           }
           case "range": {
             const guess = Number(guesses.get("guess"));
-            pressureDistance = Math.abs(guess - round.correct);
-            if (pressureDistance <= round.tolerance) score++;
-            feedback.textContent = `Your guess was ${guess} mmHg.`;
+            const correct = Math.abs(guess - round.correct) <= round.tolerance;
+            if (correct) score++;
+            feedback.textContent = correct
+              ? `Nicely guessed! Your ${guess} mmHg was within the range.`
+              : `Thanks for taking a guess. You went with ${guess} mmHg.`;
             break;
           }
         }
@@ -127,10 +87,8 @@ class HotRocksQuiz extends HTMLElement {
         }
 
         scoreDisplay.textContent = String(score);
-        distanceDisplay.textContent =
-          pressureDistance === 0
-            ? "You guessed the blood pressure reading exactly."
-            : `Your blood pressure guess was ${pressureDistance} mmHg away from the study result.`;
+        resultFeedback.textContent = resultMessages[score];
+        readingLink.hidden = score !== 0;
         result.hidden = false;
         result.querySelector("h3")?.focus();
       });

@@ -6,6 +6,8 @@ import SiteLayout from "../layouts/SiteLayout.astro";
 
 const {
   intro,
+  address,
+  directionsUrl,
   contactNote,
   contactEmail,
   phoneDisplay,
@@ -19,12 +21,15 @@ const {
   description="Get directions to The Hot Rocks Sauna at Gawley’s Gate, or call or email the hosts with questions about your visit."
 >
   <PageIntro title="Visit & Contact" intro={intro}>
+    <address id="directions" class="visit-address" tabindex="-1">
+      {address}
+    </address>
     <div class="actions">
-      <a class="text-link" href="#directions">
-        Find Us
+      <a class="button" href={directionsUrl}>
+        Get directions
       </a>
       <a class="text-link" href="#contact">
-        Contact Us
+        Contact us
       </a>
     </div>
   </PageIntro>
@@ -38,6 +43,11 @@ const {
       <div class="editorial-copy">
         <h2 id="contact-title">Get in touch</h2>
         <p>{contactNote}</p>
+        <div class="actions">
+          <a class="text-link" href="/gift-vouchers/">
+            Gift vouchers
+          </a>
+        </div>
       </div>
       <ul class="ruled-list visit-contact-methods" role="list">
         <li>
@@ -91,6 +101,12 @@ const {
 </SiteLayout>
 
 <style>
+  .visit-address {
+    margin-block-start: 0.75rem;
+    font-style: normal;
+    font-weight: 600;
+  }
+
   .visit-contact-methods li {
     padding-block: 0;
   }

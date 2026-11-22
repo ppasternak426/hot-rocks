@@ -44,6 +44,25 @@ const eventDateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/London",
 });
 
+const compactEventDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  timeZone: "Europe/London",
+});
+
+const eventTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeStyle: "short",
+  timeZone: "Europe/London",
+});
+
+export function formatCompactEventDate(startsAt: string) {
+  const date = new Date(startsAt);
+  return {
+    day: compactEventDateFormatter.format(date),
+    time: eventTimeFormatter.format(date),
+  };
+}
+
 export function formatEventDate(startsAt: string): string {
   return eventDateFormatter.format(new Date(startsAt));
 }

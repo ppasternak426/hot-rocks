@@ -20,6 +20,51 @@ const photo = () =>
 
 export const contentTypes = [
   defineType({
+    name: 'saunaBenefits',
+    title: 'Sauna benefits',
+    type: 'document',
+    fields: [
+      intro(),
+      heading(),
+      defineField({
+        name: 'topics',
+        type: 'array',
+        validation: (r) => r.required().min(1),
+        of: [
+          defineArrayMember({
+            type: 'object',
+            fields: [
+              defineField({name: 'title', type: 'string', validation: (r) => r.required()}),
+              defineField({name: 'body', type: 'text', rows: 4, validation: (r) => r.required()}),
+              defineField({
+                name: 'sources',
+                title: 'Supporting studies',
+                type: 'array',
+                validation: (r) => r.required().min(1),
+                of: [
+                  defineArrayMember({
+                    type: 'object',
+                    fields: [
+                      defineField({name: 'label', type: 'string', validation: (r) => r.required()}),
+                      defineField({
+                        name: 'href',
+                        title: 'Study URL',
+                        type: 'url',
+                        validation: (r) => r.required().uri({scheme: ['https']}),
+                      }),
+                    ],
+                    preview: {select: {title: 'label'}},
+                  }),
+                ],
+              }),
+            ],
+            preview: {select: {title: 'title'}},
+          }),
+        ],
+      }),
+    ],
+  }),
+  defineType({
     name: 'firstVisit',
     title: 'First Visit',
     type: 'document',
@@ -51,6 +96,13 @@ export const contentTypes = [
       intro(),
       defineField({name: 'locationHeading', type: 'string', validation: (r) => r.required()}),
       defineField({name: 'locationNote', type: 'string', validation: (r) => r.required()}),
+      defineField({
+        name: 'arrivalNotes',
+        title: 'Arrival and access',
+        description: 'Confirmed details about parking, the entrance, changing facilities and step-free access.',
+        type: 'text',
+        rows: 4,
+      }),
       defineField({name: 'contactNote', type: 'text', validation: (r) => r.required()}),
       defineField({
         name: 'postalAddress',
@@ -104,6 +156,15 @@ export const contentTypes = [
             validation: (r) => r.assetRequired(),
             fields: [
               defineField({
+                name: 'caption',
+                title: 'Visible caption',
+                description: 'Help visitors recognise the setting or facilities shown in this photo.',
+                type: 'string',
+                validation: (r) => r.custom((value) =>
+                  value === undefined || value.trim() ? true : 'Enter a caption or leave it blank.',
+                ),
+              }),
+              defineField({
                 name: 'alt',
                 title: 'Alternative text',
                 type: 'string',
@@ -124,7 +185,7 @@ export const contentTypes = [
     fields: [
       heading(),
       intro(),
-      photo(),
+      {...photo(), title: 'Hero photo'},
       defineField({name: 'sessionsHeading', type: 'string', validation: (r) => r.required()}),
       defineField({name: 'sessionsIntro', type: 'text', validation: (r) => r.required()}),
       defineField({name: 'hostsHeading', type: 'string', validation: (r) => r.required()}),

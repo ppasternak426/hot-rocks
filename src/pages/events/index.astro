@@ -5,6 +5,11 @@ import { getPublishedEvents } from "../../data/events";
 import SiteLayout from "../../layouts/SiteLayout.astro";
 
 const events = await getPublishedEvents();
+const now = Date.now();
+const upcoming = events.filter(({ startsAt }) => Date.parse(startsAt) >= now);
+const past = events
+  .filter(({ startsAt }) => Date.parse(startsAt) < now)
+  .reverse();
 ---
 
 <SiteLayout
@@ -13,28 +18,41 @@ const events = await getPublishedEvents();
 >
   <PageIntro
     title="Events at Hot Rocks"
-    intro={
-      events.length
-        ? "Explore past and upcoming events at Gawley’s Gate."
-        : "There are no events listed at the moment. You can still explore our guided rituals and sauna sessions."
-    }
-  >
-    {events.length === 0 && (
-      <div class="actions">
-        <a class="button" href="/sessions/#rituals">
-          Explore Guided Rituals
-        </a>
-      </div>
-    )}
-  </PageIntro>
+    intro="See what’s coming up at Gawley’s Gate."
+  />
 
-  {events.length > 0 && (
-    <section class="panel paper" aria-labelledby="events-title">
+  <section
+    class="panel paper"
+    id="upcoming-events"
+    aria-labelledby="upcoming-title"
+    tabindex="-1"
+  >
+    <div class="wrap">
+      <div class="section-heading">
+        <h2 id="upcoming-title">Upcoming events</h2>
+      </div>
+      {upcoming.length > 0 ? (
+        <EventCards events={upcoming} />
+      ) : (
+        <>
+          <p>There are no upcoming events listed right now.</p>
+          <div class="actions mt-3">
+            <a class="text-link" href="/sessions/#guided-sessions">
+              Explore guided rituals
+            </a>
+          </div>
+        </>
+      )}
+    </div>
+  </section>
+
+  {past.length > 0 && (
+    <section class="panel toast" aria-labelledby="past-title">
       <div class="wrap">
         <div class="section-heading">
-          <h2 id="events-title">All events</h2>
+          <h2 id="past-title">Past events</h2>
         </div>
-        <EventCards events={events} />
+        <EventCards events={past} />
       </div>
     </section>
   )}

@@ -21,7 +21,7 @@
   --panel-space: clamp(3rem, 7vw, 6.5rem);
   --photo-radius: 1rem;
   --arrow-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 10h12.75m-5-5 5 5-5 5'/%3E%3C/svg%3E");
-  --site-logo-size: clamp(3rem, 6vw, 3.625rem);
+  --site-logo-size: clamp(3.25rem, 6vw, 3.875rem);
   --site-header-padding: 0.35rem;
   color-scheme: light;
   font-family: "Instrument Sans", "Segoe UI", Arial, sans-serif;
@@ -29,6 +29,31 @@
   background: var(--oat);
   color: var(--espresso);
   -webkit-tap-highlight-color: #a06f413d;
+}
+
+@media (forced-colors: none) {
+  :root {
+    scrollbar-color: var(--walnut) transparent;
+  }
+
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    ::-webkit-scrollbar-track,
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--walnut);
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background-clip: padding-box;
+    }
+  }
 }
 
 body {
@@ -323,7 +348,7 @@ main p + p {
 
 @media (width >= 48rem) {
   .site-header .site-logo img {
-    width: clamp(4.75rem, 7vw, 5.5rem);
+    width: clamp(6rem, 8.5vw, 6.75rem);
   }
 }
 
@@ -370,8 +395,17 @@ main p + p {
   padding-top: 0.5rem;
 }
 
-.site-footer-nav a {
+.site-footer-nav a,
+.site-footer-legal a {
   font-weight: 400;
+}
+
+.site-footer-legal {
+  margin-block-start: 0.5rem;
+  padding-block-start: 0.25rem;
+  border-block-start: 1px solid #6d5145;
+  color: var(--oat);
+  font-size: 0.875rem;
 }
 
 .site-footer-social ul {

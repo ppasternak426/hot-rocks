@@ -1,22 +1,29 @@
 ---
 import { Image } from "astro:assets";
 import saunaBenefitsPhoto from "../assets/home/sauna-benefits-ritual.jpeg";
-import saunaInterior from "../assets/home/sauna-interior.jpg";
 import FeatureCard from "../components/FeatureCard.astro";
 import HomeEvents from "../components/HomeEvents.astro";
+import HomeOpinions from "../components/HomeOpinions.astro";
 import LocationMap from "../components/LocationMap.astro";
 import SanityPhoto from "../components/SanityPhoto.astro";
+import { getFeaturedEvents } from "../data/events";
 import { benefitHighlights } from "../data/sauna-benefits";
+import { sessionComparison } from "../data/session-comparison";
 import { getHomeContent } from "../data/site-content";
 import { getSessionCatalog } from "../data/sessions";
 import SiteLayout from "../layouts/SiteLayout.astro";
 import "../styles/home.css";
-import "../styles/photo-overlay-card.css";
 
-const [content, { featured }] = await Promise.all([
-  getHomeContent(),
-  getSessionCatalog(),
-]);
+const [content, { featured, all: sessions }, featuredEvents] =
+  await Promise.all([
+    getHomeContent(),
+    getSessionCatalog(),
+    getFeaturedEvents(),
+  ]);
+const communalSession = sessions.find(({ id }) => id === "communal");
+const [sessionsIntroStart, recommendation, sessionsIntroEnd] =
+  content.sessionsIntro.split(/(start with a shared session)/i);
+
 const benefitIcons = {
   moon: "M20 15.2A8.4 8.4 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z",
   pulse: "M3 12h4l2.5-5 4 10L16 12h5",
@@ -31,73 +38,79 @@ const benefitIcons = {
 >
   <section class="home-hero" aria-labelledby="home-title">
     <div class="home-hero-photo">
-      <Image
-        src={saunaInterior}
-        alt="Wooden benches inside The Hot Rocks Sauna"
-        widths={[480, 720, 960, 1201]}
+      <SanityPhoto
+        image={content.photo}
+        maxWidth={1600}
         sizes="max(100vw, 75svh)"
-        format="webp"
         quality={78}
         priority
-        data-transition-image=""
+        transitionImage
       />
     </div>
     <div class="wrap home-hero-copy">
       <h1 id="home-title">{content.heading}</h1>
       <p>{content.intro}</p>
-      <div class="actions">
+      <div id="book" class="actions" tabindex="-1">
         <a class="button button-light" href="/book/">
-          Book a Session
+          Book a session
         </a>
         <a
           class="text-link"
           href={featured.length ? "#sessions" : "/sessions/"}
         >
-          Explore Sessions
+          Explore sessions
         </a>
       </div>
     </div>
   </section>
 
-  {featured.length > 0 && (
-    <section
-      id="sessions"
-      class="panel paper"
-      aria-labelledby="sessions-title"
-      tabindex="-1"
-    >
-      <div class="wrap">
-        <div class="section-heading">
-          <div>
-            <h2 id="sessions-title">{content.sessionsHeading}</h2>
-            <p>{content.sessionsIntro}</p>
-          </div>
-          <a class="text-link" href="/sessions/">
-            See All Session Details
-          </a>
-        </div>
-        <ul class="feature-grid" role="list">
-          {featured.map(({ id, name, summary, image }) => (
-            <FeatureCard
-              href={`/sessions/${id}/`}
-              headingId={
-                id === featured[0]?.id
-                  ? "featured-session-title"
-                  : `choice-${id}`
-              }
-              title={name}
-              description={summary}
-              image={image}
-            />
-          ))}
-        </ul>
+  {(featured.length > 0 || featuredEvents.length > 0) && (
+    <div class="panel paper">
+      <div class="wrap home-offerings">
+        {featured.length > 0 && (
+          <section id="sessions" aria-labelledby="sessions-title" tabindex="-1">
+            <div class="section-heading">
+              <div>
+                <h2 id="sessions-title">{content.sessionsHeading}</h2>
+                <p>
+                  {communalSession && recommendation ? (
+                    <>
+                      {sessionsIntroStart}
+                      <a href={`/sessions/${communalSession.id}/`}>
+                        {recommendation}
+                      </a>
+                      {sessionsIntroEnd}
+                    </>
+                  ) : (
+                    content.sessionsIntro
+                  )}
+                </p>
+              </div>
+              <a class="text-link" href="/sessions/">
+                See all sessions
+              </a>
+            </div>
+            <ul class="feature-grid" role="list">
+              {featured.map(({ id, name, summary, image }) => (
+                <FeatureCard
+                  href={`/sessions/${id}/`}
+                  headingId={
+                    id === featured[0]?.id
+                      ? "featured-session-title"
+                      : `choice-${id}`
+                  }
+                  title={sessionComparison[id]?.displayName ?? name}
+                  description={summary}
+                  image={image}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+        <HomeEvents events={featuredEvents} />
       </div>
-    </section>
+    </div>
   )}
-
-  <LocationMap variant="home-intro" />
-
-  <HomeEvents />
 
   <section
     id="benefits"
@@ -115,10 +128,10 @@ const benefitIcons = {
       data-scroll-reveal
     />
     <div class="wrap">
-      <div class="editorial-copy benefits-panel photo-overlay-card">
+      <div class="benefits-panel">
         <h2 id="benefits-title">Sauna benefits</h2>
         <ul class="benefit-highlights" role="list">
-          {benefitHighlights.map(({ icon, title, summary }) => (
+          {benefitHighlights.map(({ icon, title }) => (
             <li>
               <span class="benefit-highlight-icon" aria-hidden="true">
                 <svg
@@ -135,16 +148,13 @@ const benefitIcons = {
                   <path d={benefitIcons[icon]} />
                 </svg>
               </span>
-              <div>
-                <h3>{title}</h3>
-                <p>{summary}</p>
-              </div>
+              <span>{title}</span>
             </li>
           ))}
         </ul>
         <div class="actions">
           <a class="text-link" href="/benefits/">
-            Explore benefits and take the quiz
+            Read more about benefits and take the quiz
           </a>
         </div>
       </div>
@@ -165,10 +175,12 @@ const benefitIcons = {
         <p>{content.hostsIntro}</p>
         <div class="actions">
           <a class="text-link" href="/about/">
-            Read Their Story
+            Read their story
           </a>
         </div>
       </div>
     </div>
   </section>
+  <HomeOpinions />
+  <LocationMap variant="home-intro" />
 </SiteLayout>

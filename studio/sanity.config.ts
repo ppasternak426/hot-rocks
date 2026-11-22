@@ -15,6 +15,11 @@ export default defineConfig({
   document: {
     singletons: [
       defineSingleton({
+        documentId: 'homepageOpinions',
+        schemaType: 'homepageOpinions',
+        title: 'Homepage opinions',
+      }),
+      defineSingleton({
         documentId: 'homepageEvents',
         schemaType: 'homepageEvents',
         title: 'Homepage events',
@@ -23,6 +28,11 @@ export default defineConfig({
         documentId: 'homepageSessions',
         schemaType: 'homepageSessions',
         title: 'Homepage sessions',
+      }),
+      defineSingleton({
+        documentId: 'saunaBenefits',
+        schemaType: 'saunaBenefits',
+        title: 'Sauna benefits',
       }),
       defineSingleton({documentId: 'firstVisit', schemaType: 'firstVisit', title: 'First Visit'}),
       defineSingleton({
