@@ -2,13 +2,15 @@
 import { sitePath } from "../data/site-path";
 import { Image } from "astro:assets";
 import sunset from "../assets/home/lough-neagh-sunset.jpeg";
-import { getVisitSettings } from "../data/site-content";
+import { getVisitSettings, type SitePhoto } from "../data/site-content";
+import SanityPhoto from "./SanityPhoto.astro";
 
 interface Props {
   variant?: "visit" | "home-intro";
+  background?: SitePhoto | null;
 }
 
-const { variant = "visit" } = Astro.props;
+const { variant = "visit", background } = Astro.props;
 const home = variant === "home-intro";
 const settings = await getVisitSettings();
 ---
@@ -19,17 +21,26 @@ const settings = await getVisitSettings();
   aria-labelledby="location-title"
   tabindex="-1"
 >
-  {home && (
-    <Image
-      class="location-backdrop"
-      src={sunset}
-      alt=""
-      widths={[960, 1280, 1600]}
-      sizes="(max-width: 52rem) max(100vw, 78rem), 100vw"
-      format="webp"
-      quality={80}
-    />
-  )}
+  {home &&
+    (background ? (
+      <SanityPhoto
+        class="location-backdrop"
+        image={background}
+        maxWidth={1600}
+        sizes="(max-width: 52rem) max(100vw, 78rem), 100vw"
+        quality={80}
+      />
+    ) : (
+      <Image
+        class="location-backdrop"
+        src={sunset}
+        alt=""
+        widths={[960, 1280, 1600]}
+        sizes="(max-width: 52rem) max(100vw, 78rem), 100vw"
+        format="webp"
+        quality={80}
+      />
+    ))}
   <div class="wrap">
     <div
       class="location-heading"
@@ -99,13 +110,13 @@ const settings = await getVisitSettings();
     color: var(--milk);
   }
 
-  .location-backdrop,
+  .location-section-home :global(.location-backdrop),
   .location-section-home::after {
     position: absolute;
     inset: 0;
   }
 
-  .location-backdrop {
+  .location-section-home :global(.location-backdrop) {
     z-index: -2;
     inline-size: 100%;
     block-size: 100%;
@@ -137,7 +148,7 @@ const settings = await getVisitSettings();
       padding-block: var(--panel-space);
     }
 
-    .location-backdrop {
+    .location-section-home :global(.location-backdrop) {
       object-position: center 54%;
     }
 

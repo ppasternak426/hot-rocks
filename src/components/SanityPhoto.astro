@@ -6,6 +6,8 @@ interface Props {
   sizes: string;
   maxWidth: number;
   quality?: number;
+  class?: string;
+  scrollReveal?: boolean;
   square?: boolean;
   priority?: boolean;
   transitionImage?: boolean;
@@ -16,6 +18,8 @@ const {
   sizes,
   maxWidth,
   quality,
+  class: className,
+  scrollReveal,
   square = false,
   priority = false,
   transitionImage,
@@ -34,6 +38,7 @@ const urlAt = (width: number) =>
 ---
 
 <img
+  class={className}
   src={urlAt(largest)}
   srcset={widths.map((width) => `${urlAt(width)} ${width}w`).join(", ")}
   sizes={sizes}
@@ -43,5 +48,6 @@ const urlAt = (width: number) =>
   loading={priority ? "eager" : "lazy"}
   fetchpriority={priority ? "high" : undefined}
   data-transition-image={transitionImage ? "" : undefined}
+  data-scroll-reveal={scrollReveal ? "" : undefined}
   decoding="async"
 />

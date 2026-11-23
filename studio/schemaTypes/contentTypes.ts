@@ -188,6 +188,18 @@ export const contentTypes = [
       {...photo(), title: 'Hero photo'},
       defineField({name: 'sessionsHeading', type: 'string', validation: (r) => r.required()}),
       defineField({name: 'sessionsIntro', type: 'text', validation: (r) => r.required()}),
+      defineField({
+        name: 'benefitsBackground',
+        title: 'Sauna benefits background',
+        type: 'image',
+        validation: (r) => r.assetRequired(),
+      }),
+      defineField({
+        name: 'visitBackground',
+        title: 'Plan your visit background',
+        type: 'image',
+        validation: (r) => r.assetRequired(),
+      }),
       defineField({name: 'hostsHeading', type: 'string', validation: (r) => r.required()}),
       defineField({name: 'hostsIntro', type: 'text', validation: (r) => r.required()}),
       defineField({

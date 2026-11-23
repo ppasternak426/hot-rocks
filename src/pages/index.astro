@@ -118,16 +118,27 @@ const benefitIcons = {
     class="panel benefits-preview"
     aria-labelledby="benefits-title"
   >
-    <Image
-      class="benefits-backdrop"
-      src={saunaBenefitsPhoto}
-      alt=""
-      widths={[800, 1120, 1440, 1600]}
-      sizes="max(100vw, 68rem)"
-      format="webp"
-      quality={80}
-      data-scroll-reveal
-    />
+    {content.benefitsBackground ? (
+      <SanityPhoto
+        class="benefits-backdrop"
+        image={content.benefitsBackground}
+        maxWidth={1600}
+        sizes="max(100vw, 68rem)"
+        quality={80}
+        scrollReveal
+      />
+    ) : (
+      <Image
+        class="benefits-backdrop"
+        src={saunaBenefitsPhoto}
+        alt=""
+        widths={[800, 1120, 1440, 1600]}
+        sizes="max(100vw, 68rem)"
+        format="webp"
+        quality={80}
+        data-scroll-reveal
+      />
+    )}
     <div class="wrap">
       <div class="benefits-panel">
         <h2 id="benefits-title">Sauna benefits</h2>
@@ -183,5 +194,5 @@ const benefitIcons = {
     </div>
   </section>
   <HomeOpinions />
-  <LocationMap variant="home-intro" />
+  <LocationMap variant="home-intro" background={content.visitBackground} />
 </SiteLayout>

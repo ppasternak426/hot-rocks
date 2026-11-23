@@ -12,13 +12,17 @@ const photoSchema = z.object({
 
 export type SitePhoto = z.infer<typeof photoSchema>;
 
-const photoFields = `
-  alt,
+const assetFields = `
   "url": asset->url,
   "width": asset->metadata.dimensions.width,
   "height": asset->metadata.dimensions.height
 `;
+const photoFields = `alt, ${assetFields}`;
 const photoProjection = `{ ${photoFields} }`;
+const backgroundPhotoProjection = `{ "alt": "", ${assetFields} }`;
+const backgroundPhotoSchema = photoSchema
+  .extend({ alt: z.literal("") })
+  .nullish();
 
 const saunaBenefitsSchema = z.object({
   intro: text,
@@ -69,6 +73,8 @@ const homeSchema = z.object({
   photo: photoSchema,
   sessionsHeading: text,
   sessionsIntro: text,
+  benefitsBackground: backgroundPhotoSchema,
+  visitBackground: backgroundPhotoSchema,
   hostsHeading: text,
   hostsIntro: text,
   hostsPhoto: photoSchema,
@@ -135,7 +141,9 @@ export async function getHomeContent() {
     await fetchContent(
       "homeContent",
       `{ heading, intro, photo ${photoProjection}, sessionsHeading, sessionsIntro,
-      hostsHeading, hostsIntro, hostsPhoto ${photoProjection} }`,
+      hostsHeading, hostsIntro, hostsPhoto ${photoProjection},
+      benefitsBackground.asset-> != null => { benefitsBackground ${backgroundPhotoProjection} },
+      visitBackground.asset-> != null => { visitBackground ${backgroundPhotoProjection} } }`,
     ),
   );
 }
