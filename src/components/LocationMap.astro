@@ -74,9 +74,6 @@ const settings = await getVisitSettings();
           <a class="text-link" href={sitePath("/first-visit/")}>
             First visit
           </a>
-          <a class="text-link" href={sitePath("/visit/#contact")}>
-            Contact us
-          </a>
         </div>
       )}
     </div>
@@ -138,6 +135,13 @@ const settings = await getVisitSettings();
 
   .location-section-home .location-heading p {
     color: var(--milk);
+  }
+
+  @media (width < 52rem) {
+    .location-section-home .actions {
+      display: grid;
+      justify-items: start;
+    }
   }
 
   @media (min-width: 52rem) {
