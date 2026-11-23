@@ -12,11 +12,13 @@ export const saunaSessionType = defineType({
       description: 'Used in the link to this session. Keep it stable after publication.',
       options: {source: 'title'},
       validation: (rule) =>
-        rule.required().custom((slug) =>
-          !slug?.current || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug.current)
-            ? true
-            : 'Use lowercase letters, numbers and hyphens.',
-        ),
+        rule
+          .required()
+          .custom((slug) =>
+            !slug?.current || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug.current)
+              ? true
+              : 'Use lowercase letters, numbers and hyphens.',
+          ),
     }),
     defineField({
       name: 'summary',
@@ -33,6 +35,64 @@ export const saunaSessionType = defineType({
       type: 'text',
       rows: 4,
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: 'bookingDemo',
+      title: 'Booking demo settings',
+      description: 'Add sample booking details to show this session in the booking demo.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'group',
+          title: 'Booking section',
+          type: 'string',
+          options: {
+            list: [
+              {title: 'Shared sauna', value: 'shared'},
+              {title: 'Guided experiences', value: 'guided'},
+              {title: 'Private sauna and packages', value: 'private'},
+            ],
+          },
+          validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: 'minutes',
+          title: 'Duration in minutes',
+          type: 'number',
+          validation: (rule) => rule.required().integer().min(1),
+        }),
+        defineField({
+          name: 'samplePrice',
+          title: 'Sample price in pence',
+          type: 'number',
+          validation: (rule) => rule.required().integer().min(0),
+        }),
+        defineField({
+          name: 'billing',
+          type: 'string',
+          options: {
+            list: [
+              {title: 'Per person', value: 'person'},
+              {title: 'Per group', value: 'group'},
+            ],
+          },
+          validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: 'minGuests',
+          title: 'Minimum guests',
+          type: 'number',
+          validation: (rule) => rule.required().integer().min(1),
+        }),
+        defineField({
+          name: 'maxGuests',
+          title: 'Maximum guests',
+          type: 'number',
+          validation: (rule) =>
+            rule.required().integer().min(1).min(rule.valueOfField('minGuests')),
+        }),
+        defineField({name: 'note', title: 'Booking note', type: 'string'}),
+      ],
     }),
     defineField({
       name: 'bookingUrl',
