@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 }
 
 const { session } = Astro.props;
-const isByRequest = session.id === onRequestSessionId;
+const isByRequest = session.id === onRequestSessionId || !session.bookingDemo;
 const facts = sessionComparison[session.id];
 const paragraphs = session.description.trim().split(/\n+/);
 const sentences = Array.from(
@@ -50,8 +50,17 @@ if (paragraphs.length === 1 && sentences.length >= 4) {
         .join(" · ")}
     </p>
     <div class="actions">
-      <a class="button" href={sitePath(`/book/?session=${session.id}`)}>
-        Book this session
+      <a
+        class="button"
+        href={sitePath(
+          session.bookingDemo
+            ? `/book/?session=${session.id}`
+            : "/visit/#contact",
+        )}
+      >
+        {session.bookingDemo
+          ? "Book this session"
+          : "Enquire about this session"}
       </a>
       <a
         class="text-link text-link-back"

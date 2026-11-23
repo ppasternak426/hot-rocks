@@ -8,9 +8,9 @@ export const homepageOpinionsType = defineType({
     defineField({
       name: 'opinions',
       title: 'Featured opinions',
-      description: 'Add up to four guest quotes and drag to set their order on the homepage.',
+      description: 'Add up to five guest quotes and drag to set their order on the homepage.',
       type: 'array',
-      validation: (rule) => rule.max(4),
+      validation: (rule) => rule.max(5),
       of: [
         defineArrayMember({
           name: 'guestOpinion',
@@ -41,6 +41,13 @@ export const homepageOpinionsType = defineType({
               description: 'Optional. Use the name the guest has agreed to share.',
               type: 'string',
               validation: (rule) => rule.max(80),
+            }),
+            defineField({
+              name: 'rating',
+              title: 'Star rating',
+              type: 'number',
+              description: 'Optional. Use the rating from the original review.',
+              validation: (rule) => rule.integer().min(1).max(5),
             }),
             defineField({
               name: 'isSample',

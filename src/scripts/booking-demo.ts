@@ -2,13 +2,12 @@ import {
   bookingSteps,
   demoCoupon,
   demoGuest,
-  demoServices,
   demoTimes,
   formatSamplePrice,
 } from "../data/booking-demo";
+import type { DemoService as Service } from "../data/sessions";
 import { enhanceGuestSelector } from "./booking-guests";
 
-type Service = (typeof demoServices)[number];
 type Step = (typeof bookingSteps)[number]["id"] | "complete";
 type CheckoutStep = "details" | "review";
 
@@ -75,7 +74,10 @@ function downloadCalendar(reservations: Reservation[]) {
       `DTSTAMP:${compactDate(new Date())}`,
       `DTSTART;TZID=Europe/London:${compactDate(start).slice(0, -1)}`,
       `DTEND;TZID=Europe/London:${compactDate(end).slice(0, -1)}`,
-      `SUMMARY:DEMO - ${service.name}`,
+      `SUMMARY:DEMO - ${service.name
+        .replaceAll("\\", "\\\\")
+        .replace(/\r\n?|\n/g, "\\n")
+        .replace(/[;,]/g, "\\$&")}`,
       "LOCATION:Gawley's Gate",
       "DESCRIPTION:Sample Hot Rocks booking. No reservation was made.",
       "STATUS:TENTATIVE",
@@ -116,6 +118,7 @@ function downloadCalendar(reservations: Reservation[]) {
 }
 
 function initialiseBooking(form: HTMLFormElement) {
+  const services: Service[] = JSON.parse(form.dataset.services ?? "[]");
   const get = <T extends Element>(selector: string) => {
     const element = form.querySelector<T>(selector);
     if (!element) throw new Error(`Missing booking control: ${selector}`);
@@ -124,9 +127,16 @@ function initialiseBooking(form: HTMLFormElement) {
   const panels = [
     ...form.querySelectorAll<HTMLFieldSetElement>("[data-booking-step]"),
   ];
-  const progress = [
-    ...form.querySelectorAll<HTMLElement>("[data-booking-progress]"),
-  ];
+  const progressList = get<HTMLOListElement>(".booking-progress");
+  const progress = bookingSteps.map(({ id }) => {
+    const selector = `[data-booking-progress="${id}"]`;
+    return {
+      id,
+      item: get<HTMLElement>(selector),
+      label: get<HTMLElement>(`${selector} [data-progress-label]`),
+      button: get<HTMLButtonElement>(`${selector} [data-progress-edit]`),
+    };
+  });
   const actionBar = get<HTMLElement>("[data-booking-actions]");
   const next = get<HTMLButtonElement>("[data-booking-next]");
   const back = get<HTMLButtonElement>('[data-booking-action="back"]');
@@ -135,6 +145,7 @@ function initialiseBooking(form: HTMLFormElement) {
   const dates = get<HTMLElement>("[data-booking-dates]");
   const times = get<HTMLElement>("[data-booking-times]");
   const timeStatus = get<HTMLElement>("[data-booking-times-status]");
+  const dateReset = get<HTMLElement>("[data-booking-date-reset]");
   const slotError = get<HTMLElement>("[data-booking-slot-error]");
   const cart = get<HTMLUListElement>("[data-booking-cart]");
   const add = get<HTMLButtonElement>('[data-booking-action="add"]');
@@ -167,7 +178,7 @@ function initialiseBooking(form: HTMLFormElement) {
     form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)
       ?.value;
   const currentService = () =>
-    demoServices.find((service) => service.id === selected("service"));
+    services.find((service) => service.id === selected("service"));
   const currentDay = () => sampleDays[Number(selected("day"))];
 
   function setRadio(name: string, value?: string) {
@@ -285,17 +296,19 @@ function initialiseBooking(form: HTMLFormElement) {
       panel.disabled = panel.hidden;
     }
     const index = bookingSteps.findIndex((item) => item.id === step);
-    for (const [position, item] of progress.entries()) {
-      item.classList.toggle(
-        "is-complete",
-        step === "complete" || position < index,
-      );
+    for (const [position, { item, label, button }] of progress.entries()) {
+      const canEdit = position < index;
+      item.classList.toggle("is-complete", step === "complete" || canEdit);
+      label.hidden = canEdit;
+      button.hidden = !canEdit;
       if (position === index) item.setAttribute("aria-current", "step");
       else item.removeAttribute("aria-current");
     }
     actionBar.hidden = step === "complete";
     back.hidden = step === "session" && reservations.length === 0;
-    next.disabled = step === "time" && currentDay()?.times.length === 0;
+    next.disabled =
+      (step === "session" && !services.length) ||
+      (step === "time" && currentDay()?.times.length === 0);
     next.textContent =
       step === "time" && returnTo === "review"
         ? "Return to review"
@@ -315,11 +328,12 @@ function initialiseBooking(form: HTMLFormElement) {
     if (focus) {
       const heading = get<HTMLElement>(`[data-booking-step="${step}"] h2`);
       heading.focus({ preventScroll: true });
-      heading.scrollIntoView({ block: "start", behavior: "instant" });
+      progressList.scrollIntoView({ block: "start", behavior: "instant" });
     }
   }
 
   function loadDraft(reservation?: Reservation) {
+    dateReset.hidden = true;
     editId = reservation?.id;
     setRadio("service", reservation?.service.id);
     setRadio("day", reservation ? String(reservation.day) : undefined);
@@ -331,6 +345,25 @@ function initialiseBooking(form: HTMLFormElement) {
     renderTimes(reservation?.time);
   }
 
+  function reviseSchedule(step: "session" | "time") {
+    if (active === "details" || active === "review") {
+      const reservation =
+        reservations.find((item) => item.id === editId) ?? reservations.at(-1);
+      if (!reservation) return;
+      returnTo = active;
+      loadDraft(reservation);
+    }
+    show(step);
+  }
+
+  for (const { id, button } of progress) {
+    button.addEventListener("click", () => {
+      if (button.hidden) return;
+      if (id === "session" || id === "time") reviseSchedule(id);
+      else show(id);
+    });
+  }
+
   form.addEventListener("change", (event) => {
     const input = event.target;
     if (!(
@@ -339,11 +372,21 @@ function initialiseBooking(form: HTMLFormElement) {
       return;
     if (input.name === "service") {
       const service = currentService();
-      if (service) setGuests(service);
+      if (service) {
+        const count = Math.min(
+          service.maxGuests,
+          Math.max(service.minGuests, Number(guests.value)),
+        );
+        setGuests(service, count);
+      }
+      if (currentDay()) dateReset.hidden = false;
       setRadio("day");
       renderTimes();
     }
-    if (input.name === "day") renderTimes();
+    if (input.name === "day") {
+      dateReset.hidden = true;
+      renderTimes();
+    }
     if (input.name === "time") slotError.hidden = true;
     if (input.name === "pay-full") renderPrice();
     renderDraft();
@@ -368,11 +411,8 @@ function initialiseBooking(form: HTMLFormElement) {
       case "back":
         if (active === "session" && reservations.length) show(returnTo);
         else if (active === "time") show("session");
-        else if (active === "details") {
-          loadDraft(reservations.at(-1));
-          returnTo = "details";
-          show("time");
-        } else if (active === "review") show("details");
+        else if (active === "details") reviseSchedule("time");
+        else if (active === "review") show("details");
         break;
       case "add":
       case "edit": {
@@ -465,6 +505,7 @@ function initialiseBooking(form: HTMLFormElement) {
           : reservations.map((existing) =>
               existing.id === editId ? item : existing,
             );
+      editId = item.id;
       accepted.checked = false;
       show(returnTo);
     } else if (active === "details" && reservations.length) {

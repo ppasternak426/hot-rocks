@@ -1,12 +1,32 @@
 import { z } from "astro/zod";
 import { sanityClient } from "sanity:client";
 
+const bookingDemoSchema = z
+  .object({
+    group: z.enum(["shared", "guided", "private"]),
+    minutes: z.number().int().positive(),
+    samplePrice: z.number().int().nonnegative(),
+    billing: z.enum(["person", "group"]),
+    minGuests: z.number().int().positive(),
+    maxGuests: z.number().int().positive(),
+    note: z.string().optional(),
+  })
+  .refine(({ minGuests, maxGuests }) => maxGuests >= minGuests, {
+    message: "Maximum guests must be at least the minimum guest count",
+  });
+
+export type DemoService = z.infer<typeof bookingDemoSchema> & {
+  id: string;
+  name: string;
+};
+
 const sessionSchema = z.object({
   _id: z.string(),
   id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   name: z.string().min(1),
   summary: z.string().min(1),
   description: z.string().min(1),
+  bookingDemo: bookingDemoSchema.nullable(),
   image: z.object({
     url: z.url(),
     alt: z.string().min(1),
@@ -27,6 +47,7 @@ const catalogQuery = `{
     "name": title,
     summary,
     description,
+    bookingDemo,
     image {
       alt,
       "url": asset->url,

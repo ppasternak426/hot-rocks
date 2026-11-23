@@ -1,7 +1,8 @@
 ---
 import { siteBase, sitePath } from "../data/site-path";
 import { getImage } from "astro:assets";
-import instrumentSansUrl from "../assets/fonts/instrument-sans.woff2?url";
+import headingFontUrl from "../assets/fonts/cormorant-garamond.woff2?url";
+import bodyFontUrl from "../assets/fonts/dm-sans.woff2?url";
 import logo from "../assets/home/hot-rocks-logo.webp";
 import sharingPhoto from "../assets/home/lough-neagh-sauna.jpg";
 import PageTransitions from "../components/PageTransitions.astro";
@@ -115,13 +116,15 @@ const legalLinks = [
       currentPath === "/about") && (
       <link rel="preconnect" href="https://cdn.sanity.io" />
     )}
-    <link
-      rel="preload"
-      href={instrumentSansUrl}
-      as="font"
-      type="font/woff2"
-      crossorigin="anonymous"
-    />
+    {[headingFontUrl, bodyFontUrl].map((href) => (
+      <link
+        rel="preload"
+        href={href}
+        as="font"
+        type="font/woff2"
+        crossorigin="anonymous"
+      />
+    ))}
     <PageTransitions />
   </head>
   <body>

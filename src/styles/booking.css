@@ -27,18 +27,60 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border-bottom: 1px solid var(--soft-rule);
   margin-bottom: 1.5rem;
+  scroll-margin-top: 1rem;
 }
 
 .booking-progress li {
   display: grid;
+  min-width: 0;
+}
+
+.booking-progress-entry {
+  display: grid;
+  inline-size: 100%;
+  min-block-size: 44px;
   align-content: start;
   justify-items: center;
   gap: 0.35rem;
   padding: 0.85rem 0.125rem;
+  border: 1px solid transparent;
   font-size: 0.875rem;
   line-height: 1.15;
   font-weight: 600;
   text-align: center;
+}
+
+button.booking-progress-entry {
+  border-color: var(--line);
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: var(--milk);
+  cursor: pointer;
+}
+
+button.booking-progress-entry:is(:hover, :focus-visible) {
+  border-color: var(--walnut);
+  background: var(--toast);
+}
+
+.booking-progress .is-complete:has(+ .is-complete) > button {
+  border-start-end-radius: 0;
+}
+
+.booking-progress .is-complete + .is-complete > button {
+  border-inline-start-width: 0;
+  border-start-start-radius: 0;
+}
+
+button.booking-progress-entry:focus-visible {
+  outline-offset: -3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button.booking-progress-entry {
+    transition:
+      background-color 200ms ease-out,
+      border-color 200ms ease-out;
+  }
 }
 
 .booking-progress-number {
@@ -70,11 +112,15 @@
     grid-template-columns: 0.85fr 1.1fr 1.2fr 0.85fr;
   }
 
-  .booking-progress li {
-    min-width: 0;
+  .booking-progress-entry {
     padding-inline: 0;
     font-size: 0.8125rem;
   }
+}
+
+[data-booking-date-reset] {
+  margin-block: 0.5rem 1rem;
+  color: var(--walnut);
 }
 
 .booking-layout {
@@ -445,9 +491,6 @@
   color: var(--espresso);
   font-size: 0.9375rem;
   font-weight: 500;
-  cursor: pointer;
-  text-decoration-line: underline;
-  text-underline-offset: 0.23em;
 }
 
 .booking-help {

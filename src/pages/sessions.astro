@@ -14,7 +14,9 @@ const groups = sessionCategories
   .map((category) => ({
     ...category,
     sessions: sessions.filter(
-      ({ id }) => (sessionComparison[id]?.category ?? "other") === category.id,
+      ({ id, bookingDemo }) =>
+        (bookingDemo?.group ?? sessionComparison[id]?.category ?? "other") ===
+        category.id,
     ),
   }))
   .filter((group) => group.sessions.length > 0);
@@ -54,23 +56,30 @@ const groups = sessionCategories
       <div class="wrap">
         <h2 id={`${category}-heading`}>{label}</h2>
         <ul class="ruled-list session-list" role="list">
-          {sessions.map(({ id, name, summary }) => {
+          {sessions.map(({ id, name, summary, bookingDemo }) => {
             const facts = sessionComparison[id];
             const booking =
-              id === onRequestSessionId ? "By enquiry" : "Book online";
+              id === onRequestSessionId || !bookingDemo
+                ? "By enquiry"
+                : "Book online";
             return (
               <li id={id} tabindex="-1">
-                <h3>
-                  <a class="text-link" href={sitePath(`/sessions/${id}/`)}>
-                    {facts?.displayName ?? name}
-                  </a>
-                </h3>
-                <p class="session-facts">
-                  {[facts?.duration, facts?.format, booking]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                <p>{facts?.comparisonSummary ?? summary}</p>
+                <a
+                  class="session-entry"
+                  href={sitePath(`/sessions/${id}/`)}
+                  aria-labelledby={`session-title-${id}`}
+                >
+                  <h3 id={`session-title-${id}`}>
+                    <span>{facts?.displayName ?? name}</span>
+                    <span class="feature-card-arrow" aria-hidden="true" />
+                  </h3>
+                  <p class="session-facts">
+                    {[facts?.duration, facts?.format, booking]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  <p>{facts?.comparisonSummary ?? summary}</p>
+                </a>
               </li>
             );
           })}
@@ -103,16 +112,57 @@ const groups = sessionCategories
     margin-block-start: 1.25rem;
   }
 
-  .session-list h3 a {
-    display: inline;
-    font: inherit;
-    min-block-size: initial;
+  .session-list > li {
+    padding-block: 0;
   }
 
-  .session-list h3 a::after {
-    display: inline-block;
-    margin-inline-start: 0.45em;
-    vertical-align: middle;
+  .session-entry {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    padding: 0.85rem 0.75rem;
+    text-decoration: none;
+  }
+
+  .session-entry h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+  }
+
+  .session-entry::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--walnut) 9%, transparent),
+      transparent
+    );
+    opacity: 0;
+    content: "";
+  }
+
+  .session-entry:is(:hover, :focus-visible)::before {
+    opacity: 1;
+  }
+
+  .session-entry:focus-visible {
+    outline-offset: -2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .session-entry::before {
+      transition: opacity 200ms ease-out;
+    }
+
+    .session-entry .feature-card-arrow {
+      transition: translate 160ms ease-out;
+    }
+
+    .session-entry:is(:hover, :focus-visible) .feature-card-arrow {
+      translate: 3px 0;
+    }
   }
 
   .session-list p {

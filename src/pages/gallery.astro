@@ -22,11 +22,7 @@ const { heading, intro, photos } = await getGalleryContent();
       >
         <div class="photo">
           <SanityPhoto
-            image={
-              image.caption && image.caption !== image.alt
-                ? image
-                : { ...image, alt: "" }
-            }
+            image={image}
             maxWidth={index === 0 ? 1600 : 960}
             priority={index === 0}
             sizes={
@@ -36,7 +32,6 @@ const { heading, intro, photos } = await getGalleryContent();
             }
           />
         </div>
-        <figcaption>{image.caption ?? image.alt}</figcaption>
       </figure>
     ))}
     <div class="actions gallery-wide">
@@ -68,12 +63,6 @@ const { heading, intro, photos } = await getGalleryContent();
 
   .gallery-wide .photo {
     aspect-ratio: 2.25;
-  }
-
-  .gallery figcaption {
-    margin-block-start: 0.65rem;
-    color: var(--walnut);
-    line-height: 1.5;
   }
 
   @media (max-width: 42rem) {

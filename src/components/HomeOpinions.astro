@@ -40,10 +40,32 @@ const allSamples = opinions.every(({ isSample }) => isSample);
         )}
         <div class="opinion-viewport" data-scroll-reveal>
           <ul id="opinion-list" class="opinion-grid" role="list">
-            {opinions.map(({ title, quote, authorName, isSample }) => (
+            {opinions.map(({ title, quote, authorName, rating, isSample }) => (
               <li class="opinion-card" data-opinion-card>
                 <figure>
                   {title && <h3>{title}</h3>}
+                  {rating !== null && (
+                    <div
+                      class="opinion-rating"
+                      role="img"
+                      aria-label={`${rating} out of 5 stars`}
+                    >
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill={star <= rating ? "var(--honey)" : "none"}
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3L7 14.2 2 9.3l6.9-1z" />
+                        </svg>
+                      ))}
+                    </div>
+                  )}
                   {isSample && !allSamples && (
                     <p class="opinion-sample">Fictional example</p>
                   )}
@@ -102,40 +124,76 @@ const allSamples = opinions.every(({ isSample }) => isSample);
   if (carousel && track && status && previous && next && cards.length > 1) {
     const mobile = window.matchMedia("(width <= 44rem)");
     const desktop = window.matchMedia("(width >= 60rem)");
-    let first = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let finishSlide: (() => void) | undefined;
 
-    const update = (step: number) => {
+    const update = (announce = false) => {
       const visible = desktop.matches ? 3 : mobile.matches ? 1 : 2;
-      const last = Math.max(0, cards.length - visible);
-      const target = Math.max(0, Math.min(first + step, last));
-      const changed = first !== target;
-      first = target;
+      const canSlide = cards.length > visible;
+      carousel.toggleAttribute("data-can-slide", canSlide);
+      if (!canSlide) track.append(...cards);
 
-      track.style.setProperty("--first-card", String(first));
-      carousel.toggleAttribute("data-can-slide", last > 0);
-      previous.setAttribute("aria-disabled", String(first === 0));
-      next.setAttribute("aria-disabled", String(first === last));
-      cards.forEach((card, index) => {
-        card.toggleAttribute(
-          "inert",
-          index < first || index >= first + visible,
-        );
+      const orderedCards = Array.from(track.children);
+      orderedCards.forEach((card, index) => {
+        card.toggleAttribute("inert", index >= visible);
       });
 
-      if (changed && step) {
-        const end = Math.min(first + visible, cards.length);
+      if (announce) {
+        const positions = orderedCards
+          .slice(0, visible)
+          .map((card) => cards.indexOf(card) + 1);
         status.textContent =
           visible === 1
-            ? `Opinion ${first + 1} of ${cards.length}`
-            : `Opinions ${first + 1} to ${end} of ${cards.length}`;
+            ? `Opinion ${positions[0]} of ${cards.length}`
+            : `Showing opinions ${positions.join(", ")} of ${cards.length}`;
       }
     };
 
-    previous.addEventListener("click", () => update(-1));
-    next.addEventListener("click", () => update(1));
-    mobile.addEventListener("change", () => update(0));
-    desktop.addEventListener("change", () => update(0));
-    update(0);
+    const slide = (forward: boolean) => {
+      finishSlide?.();
+      const first = track.firstElementChild;
+      const last = track.lastElementChild;
+      if (!first || !last || !carousel.hasAttribute("data-can-slide")) return;
+
+      // Reuse the same cards. Moving back needs a card before the viewport
+      // starts sliding, while moving forward can recycle the outgoing card.
+      if (!forward) track.prepend(last);
+
+      const shifted = "translateX(calc(-1 * var(--card-step)))";
+      const animation = reducedMotion.matches
+        ? undefined
+        : track.animate(
+            { transform: forward ? ["none", shifted] : [shifted, "none"] },
+            {
+              duration: 320,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+              fill: "both",
+            },
+          );
+      const finish = () => {
+        if (finishSlide !== finish) return;
+        finishSlide = undefined;
+        if (forward) track.append(first);
+        animation?.cancel();
+        update(true);
+      };
+      finishSlide = finish;
+
+      if (animation) void animation.finished.then(finish, finish);
+      else finish();
+    };
+
+    const onViewportChange = () => {
+      finishSlide?.();
+      update();
+    };
+
+    previous.addEventListener("click", () => slide(false));
+    next.addEventListener("click", () => slide(true));
+    mobile.addEventListener("change", onViewportChange);
+    desktop.addEventListener("change", onViewportChange);
+    reducedMotion.addEventListener("change", onViewportChange);
+    update();
   }
 </script>
 
@@ -161,6 +219,13 @@ const allSamples = opinions.every(({ isSample }) => isSample);
     border-radius: var(--photo-radius);
     background: var(--milk);
     overflow-wrap: anywhere;
+  }
+
+  .opinion-rating {
+    display: flex;
+    gap: 0.2rem;
+    margin-block-end: 0.75rem;
+    color: var(--walnut);
   }
 
   .opinion-card blockquote {
@@ -199,17 +264,10 @@ const allSamples = opinions.every(({ isSample }) => isSample);
   }
 
   [data-can-slide] .opinion-grid {
+    --card-step: calc((100% + var(--card-gap)) / var(--visible-cards));
     grid-template-columns: none;
     grid-auto-flow: column;
-    grid-auto-columns: calc(
-      (100% + var(--card-gap)) / var(--visible-cards) - var(--card-gap)
-    );
-    transform: translateX(
-      calc(
-        -1 * var(--first-card, 0) * (100% + var(--card-gap)) /
-          var(--visible-cards)
-      )
-    );
+    grid-auto-columns: calc(var(--card-step) - var(--card-gap));
   }
 
   [data-can-slide] .opinion-arrow {
@@ -223,22 +281,11 @@ const allSamples = opinions.every(({ isSample }) => isSample);
     background: var(--milk);
     color: var(--espresso);
     cursor: pointer;
+    touch-action: manipulation;
   }
 
-  .opinion-arrow[aria-disabled="true"] {
-    color: var(--walnut);
-    opacity: 0.5;
-    cursor: default;
-  }
-
-  .opinion-arrow:not([aria-disabled="true"]):is(:hover, :focus-visible) {
+  .opinion-arrow:is(:hover, :focus-visible) {
     border-color: var(--espresso);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    [data-can-slide] .opinion-grid {
-      transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
   }
 
   @media (width >= 60rem) {

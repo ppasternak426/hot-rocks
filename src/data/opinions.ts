@@ -6,16 +6,18 @@ const opinionsSchema = z.array(
     title: z.string().trim().nullable(),
     quote: z.string().trim().min(1),
     authorName: z.string().trim().nullable(),
+    rating: z.number().int().min(1).max(5).nullable(),
     isSample: z.boolean(),
   }),
 );
 
 const featuredOpinionsQuery = `coalesce(
   *[_id == "homepageOpinions" && _type == "homepageOpinions"][0]
-    .opinions[0...4]{
+    .opinions[0...5]{
       title,
       quote,
       "authorName": coalesce(authorName, attribution),
+      rating,
       "isSample": coalesce(isSample, false)
     },
   []

@@ -5,13 +5,25 @@ import view from "../assets/home/lough-neagh-sauna.jpg";
 import {
   bookingSteps,
   demoCoupon,
-  demoServices,
   formatSampleDuration,
   formatSamplePrice,
   sessionGroups,
 } from "../data/booking-demo";
 import SiteLayout from "../layouts/SiteLayout.astro";
+import { getSessionCatalog } from "../data/sessions";
 import "../styles/booking.css";
+
+const { all: sessions } = await getSessionCatalog();
+const services = sessions.flatMap(({ id, name, bookingDemo }) =>
+  bookingDemo ? [{ ...bookingDemo, id, name }] : [],
+);
+const groups = sessionGroups
+  .map((group) => ({
+    ...group,
+    services: services.filter((service) => service.group === group.id),
+  }))
+  .filter((group) => group.services.length > 0);
+const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
 ---
 
 <SiteLayout
@@ -31,60 +43,102 @@ import "../styles/booking.css";
       <p>Enable JavaScript to try the booking demo.</p>
     </noscript>
 
-    <form id="booking-demo" autocomplete="off" inert>
+    <form
+      id="booking-demo"
+      autocomplete="off"
+      data-services={JSON.stringify(services)}
+      inert
+    >
       <ol class="booking-progress" aria-label="Booking progress">
         {bookingSteps.map(({ id, label }, index) => (
           <li
             data-booking-progress={id}
             aria-current={index === 0 ? "step" : undefined}
           >
-            <span class="booking-progress-number">{index + 1}</span>
-            <span>{label}</span>
+            <span class="booking-progress-entry" data-progress-label>
+              <span class="booking-progress-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <span>{label}</span>
+            </span>
+            <button
+              class="booking-progress-entry"
+              type="button"
+              aria-label={`Edit ${label.toLowerCase()}`}
+              aria-controls={`booking-step-${id}`}
+              data-progress-edit
+              hidden
+            >
+              <span class="booking-progress-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <span>{label}</span>
+            </button>
           </li>
         ))}
       </ol>
 
       <div class="booking-layout">
         <div class="booking-workspace">
-          <fieldset data-booking-step="session" class="booking-step">
+          <fieldset
+            id="booking-step-session"
+            data-booking-step="session"
+            class="booking-step"
+          >
             <legend class="sr-only">Choose a session</legend>
             <h2 tabindex="-1">Choose a session</h2>
             <p class="booking-lede">
-              Choose from the sessions on the live booking menu.
+              Choose a session to try the booking demo.
             </p>
-            {sessionGroups.map(({ id, label }) => (
+            {groups.map(({ label, services }) => (
               <fieldset class="booking-service-group">
                 <legend>{label}</legend>
-                {demoServices
-                  .filter((service) => service.group === id)
-                  .map((service) => (
-                    <label class="booking-service">
-                      <input
-                        type="radio"
-                        name="service"
-                        value={service.id}
-                        required
-                      />
-                      <span class="booking-service-name">
-                        <strong>{service.name}</strong>
-                        <span>
-                          {formatSampleDuration(service.minutes)}
-                          {service.note && <> · {service.note}</>}
-                        </span>
+                {services.map((service) => (
+                  <label class="booking-service">
+                    <input
+                      type="radio"
+                      name="service"
+                      value={service.id}
+                      required
+                    />
+                    <span class="booking-service-name">
+                      <strong>{service.name}</strong>
+                      <span>
+                        {formatSampleDuration(service.minutes)}
+                        {service.note && <> · {service.note}</>}
                       </span>
-                      <span class="booking-price">
-                        <strong>
-                          {formatSamplePrice(service.samplePrice)}
-                        </strong>
-                        <span>per {service.billing}</span>
-                      </span>
-                    </label>
-                  ))}
+                    </span>
+                    <span class="booking-price">
+                      <strong>{formatSamplePrice(service.samplePrice)}</strong>
+                      <span>per {service.billing}</span>
+                    </span>
+                  </label>
+                ))}
               </fieldset>
             ))}
+            {!sessions.length && <p>No sessions are currently available.</p>}
+            {unconfiguredSessions.length > 0 && (
+              <div class="booking-service-group">
+                <h3>More sessions</h3>
+                <p>Contact us for details about these sessions.</p>
+                <ul>
+                  {unconfiguredSessions.map((session) => (
+                    <li>
+                      <a href={sitePath(`/sessions/${session.id}/`)}>
+                        {session.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <a class="text-link" href={sitePath("/visit/#contact")}>
+                  Contact us
+                </a>
+              </div>
+            )}
           </fieldset>
 
           <fieldset
+            id="booking-step-time"
             data-booking-step="time"
             class="booking-step"
             hidden
@@ -94,6 +148,9 @@ import "../styles/booking.css";
             <h2 tabindex="-1">Choose a date and time</h2>
             <p class="booking-lede">Sample slots are shown in UK time.</p>
             <p class="booking-picked-service" data-booking-picked-service></p>
+            <p data-booking-date-reset hidden>
+              The session changed. Choose a new date and time.
+            </p>
             <div class="booking-field booking-field-short">
               <label id="booking-guests-label" for="booking-guests">
                 Guests
@@ -158,6 +215,7 @@ import "../styles/booking.css";
           </fieldset>
 
           <fieldset
+            id="booking-step-details"
             data-booking-step="details"
             class="booking-step"
             hidden
@@ -221,6 +279,7 @@ import "../styles/booking.css";
           </fieldset>
 
           <fieldset
+            id="booking-step-review"
             data-booking-step="review"
             class="booking-step"
             hidden

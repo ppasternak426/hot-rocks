@@ -64,10 +64,6 @@ export const sessionComparison: Partial<Record<string, SessionComparison>> = {
     duration: "2 hours",
     format: "Guided whisking",
   },
-  "journey-by-steam-with-nick": {
-    category: "guided",
-    format: "Guided by Nick",
-  },
   private: {
     displayName: "Forest View private sauna",
     comparisonSummary: "Have the Forest View sauna to yourselves.",
