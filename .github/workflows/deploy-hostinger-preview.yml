@@ -1,0 +1,101 @@
+name: Deploy Astro preview to Hostinger
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-astro-preview
+  cancel-in-progress: false
+
+env:
+  PREVIEW_DOMAIN: tender-palegoldenrod-porcupine-90.hostingersite.com
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: hostinger-preview
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: "1.4.5"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the Astro preview from published Sanity content
+        run: |
+          build_dir="$RUNNER_TEMP/hot-rocks-preview"
+          bun run build --site "https://$PREVIEW_DOMAIN" --outDir "$build_dir"
+          test -s "$build_dir/index.html"
+          test -s "$build_dir/404.html"
+          cat > "$build_dir/.htaccess" <<'APACHE'
+          <IfModule mod_headers.c>
+            Header always set X-Robots-Tag "noindex"
+          </IfModule>
+          ErrorDocument 404 /404.html
+          APACHE
+
+      - name: Install Hostinger CLI
+        run: |
+          cli_dir="$RUNNER_TEMP/hostinger-cli"
+          archive="$cli_dir/hostinger.tar.gz"
+          mkdir -p "$cli_dir"
+          curl --fail --silent --show-error --location --retry 3 --max-time 90 \
+            --output "$archive" \
+            https://github.com/hostinger/api-cli/releases/download/v5.10.0/hostinger-5.10.0-linux-amd64.tar.gz
+          printf '%s  %s\n' db4b4e875cb31dad2f1496f2331645ed96fc2501e62c545ff2bce3ce91e72b25 "$archive" \
+            | sha256sum --check
+          tar -xzf "$archive" -C "$cli_dir" hostinger
+          echo "$cli_dir" >> "$GITHUB_PATH"
+
+      - name: Deploy to the existing Hostinger preview
+        env:
+          HOSTINGER_API_TOKEN: ${{ secrets.HOSTINGER_API_TOKEN }}
+        run: |
+          if [[ -z "$HOSTINGER_API_TOKEN" ]]; then
+            echo '::error::Set HOSTINGER_API_TOKEN in the hostinger-preview environment.'
+            exit 1
+          fi
+
+          hostinger up "$RUNNER_TEMP/hot-rocks-preview" \
+            --domain "$PREVIEW_DOMAIN" --type static --source upload --no-input --yes
+
+      - name: Verify the deployed homepage and noindex header
+        run: |
+          url="https://$PREVIEW_DOMAIN/?deploy=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          headers="$RUNNER_TEMP/hot-rocks-preview.headers"
+          page="$RUNNER_TEMP/hot-rocks-preview.html"
+
+          for attempt in {1..10}; do
+            if curl --fail --silent --show-error --max-time 10 \
+              --dump-header "$headers" --output "$page" "$url" &&
+              cmp -s "$RUNNER_TEMP/hot-rocks-preview/index.html" "$page" &&
+              grep -Eiq '^x-robots-tag:[[:space:]]*noindex[[:space:]]*$' "$headers"; then
+              echo "Verified https://$PREVIEW_DOMAIN/"
+              exit 0
+            fi
+            if [[ "$attempt" -lt 10 ]]; then
+              sleep 6
+            fi
+          done
+
+          echo '::error::The preview did not serve the built homepage with its noindex header.'
+          exit 1
