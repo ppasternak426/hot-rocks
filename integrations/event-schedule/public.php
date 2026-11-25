@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
 require dirname(__DIR__).'/hot-rocks-booking/application.php';
+require dirname(__DIR__).'/hot-rocks-booking/checkout.php';
 
 function sendJson(array $data, int $status = 200): never
 {
@@ -38,7 +39,7 @@ function forestType(): AppointmentType
         ->where('slug', 'forest-view-private')->where('is_active', true)->where('is_deleted', false)->firstOrFail();
 }
 
-function occurrence(Event $event, CarbonImmutable $day, bool $package): ?array
+function occurrence(Event $event, CarbonImmutable $day, bool $package, int $noticeMinutes = 0): ?array
 {
     $date = $day->toDateString();
     $ticket = $event->tickets->first();
@@ -46,7 +47,7 @@ function occurrence(Event $event, CarbonImmutable $day, bool $package): ?array
         return null;
     }
     $start = $event->getStartDateTime($date, true, BOOKING_TIMEZONE);
-    if (!$start || $start->lte(CarbonImmutable::now(BOOKING_TIMEZONE))) {
+    if (!$start || $start->lte(CarbonImmutable::now(BOOKING_TIMEZONE)->addMinutes($noticeMinutes))) {
         return null;
     }
 
@@ -71,14 +72,20 @@ function availability(string $service, int $guests): array
     $horizon = $today->addDays(BOOKING_HORIZON);
     if ($service === FOREST_SERVICE) {
         $slots = [];
+        $earliest = CarbonImmutable::now(BOOKING_TIMEZONE)->addMinutes(CHECKOUT_WINDOW_MINUTES);
+        $type = forestType();
         for ($day = $today; $day->lt($horizon); $day = $day->addDays(30)) {
-            $result = app(AppointmentService::class)->availableSlots(forestType(), $day->toDateString(), 30);
+            $result = app(AppointmentService::class)->availableSlots($type, $day->toDateString(), 30, withNextAvailable: false);
             foreach ($result['days'] as $date => $windows) {
                 foreach ($windows as $window) {
+                    $start = CarbonImmutable::parse($window['utc'])->setTimezone(BOOKING_TIMEZONE);
+                    if ($start->lte($earliest)) {
+                        continue;
+                    }
                     $slots[] = [
                         'id' => $window['utc'],
                         'date' => $date,
-                        'time' => CarbonImmutable::parse($window['utc'])->setTimezone(BOOKING_TIMEZONE)->format('H:i'),
+                        'time' => $start->format('H:i'),
                         'remaining' => 8,
                     ];
                 }
@@ -91,7 +98,7 @@ function availability(string $service, int $guests): array
     $slots = [];
     foreach (findSeries($service) as $event) {
         for ($day = $today; $day->lt($horizon); $day = $day->addDay()) {
-            $slot = occurrence($event, $day, $service === PACKAGE_SERVICE);
+            $slot = occurrence($event, $day, $service === PACKAGE_SERVICE, CHECKOUT_WINDOW_MINUTES);
             if ($slot && $slot['remaining'] >= $guests) {
                 $slots[] = $slot;
             }
@@ -102,7 +109,7 @@ function availability(string $service, int $guests): array
     return $slots;
 }
 
-function reserve(string $service, int $guests, string $slot, string $name, string $email, string $attempt): array
+function reserve(string $service, int $guests, string $slot, string $name, string $email, string $attempt, int $noticeMinutes = 0): array
 {
     if ($service === FOREST_SERVICE) {
         $type = forestType();
@@ -125,7 +132,7 @@ function reserve(string $service, int $guests, string $slot, string $name, strin
             return [409, []];
         }
 
-        $current = occurrence($event, $day, $package);
+        $current = occurrence($event, $day, $package, $noticeMinutes);
         if (!$current || $current['remaining'] < $guests) {
             return [409, []];
         }
@@ -154,18 +161,23 @@ function reserve(string $service, int $guests, string $slot, string $name, strin
     }
 
     if ($service === FOREST_SERVICE) {
-        // Sales counts one exclusive booking. Show group size alongside it for the operator.
         $sale = Sale::query()->with('event')->findOrFail(UrlUtils::decodeId($data['data']['id']));
-        $event = $sale->event;
-        $suffix = ' · '.$guests.($guests === 1 ? ' guest' : ' guests');
-        if (!str_ends_with($event->name, $suffix)) {
-            $event->name .= $suffix;
-        }
-        $event->custom_fields = $type->custom_fields;
-        $event->save();
+        labelForestBooking($sale, $type, $guests);
     }
 
     return [201, ['reference' => $data['data']['id']]];
+}
+
+function labelForestBooking(Sale $sale, AppointmentType $type, int $guests): void
+{
+    // Sales counts one exclusive booking. Show group size alongside it for the operator.
+    $event = $sale->event;
+    $suffix = ' · '.$guests.($guests === 1 ? ' guest' : ' guests');
+    if (!str_ends_with($event->name, $suffix)) {
+        $event->name .= $suffix;
+    }
+    $event->custom_fields = $type->custom_fields;
+    $event->save();
 }
 
 header('Content-Type: application/json');
@@ -194,6 +206,16 @@ try {
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input', false, null, 0, 4096), true);
     }
+    $action = $data['action'] ?? 'reserve';
+    if ($method === 'POST' && in_array($action, ['payment_status', 'cancel_checkout'], true)) {
+        $attempt = $data['attempt'] ?? null;
+        if (!validBookingAttempt($attempt)) {
+            sendJson(['error' => 'Invalid booking reference.'], 422);
+        }
+        eventScheduleApp();
+        [$status, $result] = previewPaymentStatus($attempt, $action === 'cancel_checkout');
+        sendJson($result, $status);
+    }
     $service = $data['service'] ?? null;
     $guests = filter_var($data['guests'] ?? null, FILTER_VALIDATE_INT);
     $limits = is_string($service) ? match ($service) {
@@ -217,7 +239,7 @@ try {
     if (!is_string($slot) || strlen($slot) > 80 || !is_string($name) || trim($name) === '' || mb_strlen($name) > 100
         || !is_string($email) || strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)
         || !preg_match('/@example\.(com|net|org)$/iD', $email)
-        || !is_string($attempt) || !preg_match('/^[a-f0-9-]{36}$/D', $attempt)) {
+        || !validBookingAttempt($attempt)) {
         sendJson(['error' => 'Enter a name and a test email such as sam@example.com.'], 422);
     }
 
@@ -226,6 +248,18 @@ try {
         sendJson(['error' => 'Too many test requests. Try again in a minute.'], 429);
     }
     RateLimiter::hit($rateKey, 60);
+
+    if ($action === 'checkout') {
+        $amount = $data['amount'] ?? null;
+        if (!is_int($amount) || $amount < 0) {
+            sendJson(['error' => 'Invalid test checkout.'], 422);
+        }
+        [$status, $result] = startPreviewCheckout($service, $guests, $slot, $name, $email, $attempt, $amount);
+        sendJson($result, $status);
+    }
+    if ($action !== 'reserve') {
+        sendJson(['error' => 'Invalid booking action.'], 422);
+    }
 
     $fingerprint = hash('sha256', json_encode([$service, $guests, $slot, $name, $email], JSON_THROW_ON_ERROR));
     $cacheKey = 'hot-rocks-attempt:'.$attempt;
@@ -244,6 +278,6 @@ try {
     });
     sendJson($result, $status);
 } catch (Throwable $error) {
-    error_log('Hot Rocks booking preview: '.$error->getMessage());
+    error_log('Hot Rocks booking preview: '.$error::class);
     sendJson(['error' => 'Booking is temporarily unavailable.'], 503);
 }

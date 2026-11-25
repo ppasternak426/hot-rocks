@@ -1,12 +1,14 @@
-import {
-  bookingSteps,
-  demoGuest,
-  formatSamplePrice,
-} from "../data/booking-demo";
+import { bookingSteps, formatSamplePrice } from "../data/booking-demo";
 import type { DemoService as Service } from "../data/sessions";
 import { enhanceGuestSelector } from "./booking-guests";
+import {
+  checkPayment,
+  paymentMessages,
+  readPaymentReturn,
+  stripeCheckoutUrl,
+} from "./booking-payment";
 
-type Step = (typeof bookingSteps)[number]["id"] | "complete";
+type Step = (typeof bookingSteps)[number]["id"] | "payment";
 
 interface Slot {
   id: string;
@@ -40,10 +42,12 @@ const nextLabel: Record<Step, string> = {
   session: "Choose date and time",
   time: "Continue to guest details",
   details: "Review booking",
-  review: "Save test reservation",
-  complete: "",
+  review: "Continue to Stripe",
+  payment: "",
 };
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const estimatedTotal = (service: Service, guests: number) =>
+  service.samplePrice * (service.billing === "person" ? guests : 1);
 
 const asDate = (date: string) => new Date(`${date}T12:00:00Z`);
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
@@ -92,6 +96,7 @@ function initialiseBooking(form: HTMLFormElement) {
   const timeCaption = get<HTMLElement>("[data-booking-times-caption]");
   const timeStatus = get<HTMLElement>("[data-booking-times-status]");
   const submitError = get<HTMLElement>("[data-booking-submit-error]");
+  const submitStatus = get<HTMLElement>("[data-booking-submit-status]");
   const slotError = get<HTMLElement>("[data-booking-slot-error]");
   const next = get<HTMLButtonElement>("[data-booking-next]");
   const name = get<HTMLInputElement>("#booking-name");
@@ -111,6 +116,9 @@ function initialiseBooking(form: HTMLFormElement) {
   let saving = false;
   let attempt = "";
   let requestFingerprint = "";
+  let quotedTotal: number | undefined;
+  let paymentReturn = readPaymentReturn(new URLSearchParams(location.search));
+  let pickAnotherTime = false;
 
   const currentService = () =>
     services.find(
@@ -119,7 +127,6 @@ function initialiseBooking(form: HTMLFormElement) {
         form.querySelector<HTMLInputElement>('input[name="service"]:checked')
           ?.value,
     );
-
   function setGuests(service: Service, count = service.minGuests) {
     guests.replaceChildren(
       ...Array.from(
@@ -335,7 +342,8 @@ function initialiseBooking(form: HTMLFormElement) {
     get<HTMLElement>("[data-booking-totals]").hidden = !slot;
     if (slot && service && count) {
       get("[data-booking-total]").textContent = formatSamplePrice(
-        service.samplePrice * (service.billing === "person" ? count : 1),
+        (active === "time" ? undefined : quotedTotal) ??
+          estimatedTotal(service, count),
       );
     }
   }
@@ -352,10 +360,11 @@ function initialiseBooking(form: HTMLFormElement) {
       panel.disabled = panel.hidden;
     }
     const index = bookingSteps.findIndex(({ id }) => id === step);
+    progress.hidden = step === "payment";
     for (const [position, { id }] of bookingSteps.entries()) {
       const item = get(`[data-booking-progress="${id}"]`);
       const editable = index > position;
-      item.classList.toggle("is-complete", step === "complete" || editable);
+      item.classList.toggle("is-complete", editable);
       get<HTMLElement>(
         `[data-booking-progress="${id}"] [data-progress-label]`,
       ).hidden = editable;
@@ -365,7 +374,7 @@ function initialiseBooking(form: HTMLFormElement) {
       if (position === index) item.setAttribute("aria-current", "step");
       else item.removeAttribute("aria-current");
     }
-    get<HTMLElement>("[data-booking-actions]").hidden = step === "complete";
+    get<HTMLElement>("[data-booking-actions]").hidden = step === "payment";
     get<HTMLButtonElement>('[data-booking-action="back"]').hidden =
       step === "session";
     next.textContent = nextLabel[step];
@@ -376,10 +385,12 @@ function initialiseBooking(form: HTMLFormElement) {
         `${name.value} · ${email.value}`;
     renderSummary();
     if (focus) {
-      get<HTMLElement>(`[data-booking-step="${step}"] h2`).focus({
-        preventScroll: true,
+      const heading = get<HTMLElement>(`[data-booking-step="${step}"] h2`);
+      heading.focus({ preventScroll: true });
+      (step === "payment" ? heading : progress).scrollIntoView({
+        block: step === "payment" ? "nearest" : "start",
+        behavior: "instant",
       });
-      progress.scrollIntoView({ block: "start", behavior: "instant" });
     }
   }
 
@@ -455,36 +466,132 @@ function initialiseBooking(form: HTMLFormElement) {
         renderCalendar();
         renderTimes();
         break;
-      case "sample":
-        name.value = demoGuest.name;
-        email.value = demoGuest.email;
-        name.focus();
-        break;
       case "details":
         show("details");
         break;
-      case "restart":
-        form.reset();
-        selection = undefined;
+      case "check-payment":
+        void showPaymentResult();
+        break;
+      case "new-payment-booking": {
+        const url = new URL(location.href);
+        url.searchParams.delete("booking");
+        url.searchParams.delete("checkout");
+        history.replaceState(history.state, "", url);
+        paymentReturn = undefined;
+        quotedTotal = undefined;
         requestFingerprint = "";
         submitError.hidden = true;
-        show("session");
+        if (pickAnotherTime && selection) {
+          setGuests(selection.service, selection.guests);
+          get("[data-booking-picked-service]").textContent =
+            selection.service.name;
+          edit("time");
+        } else {
+          form.reset();
+          selection = undefined;
+          show("session");
+        }
         break;
+      }
     }
   });
 
-  async function save(reservation: Selection) {
+  async function showPaymentResult() {
+    if (!api || !paymentReturn || saving) return;
+    saving = true;
+    const { attempt: pendingAttempt, mode } = paymentReturn;
+    const heading = get("[data-booking-payment-heading]");
+    const note = get("[data-booking-payment-note]");
+    const reference = get<HTMLElement>("[data-booking-payment-reference]");
+    const check = get<HTMLButtonElement>(
+      '[data-booking-action="check-payment"]',
+    );
+    const newBooking = get<HTMLButtonElement>(
+      '[data-booking-action="new-payment-booking"]',
+    );
+    check.disabled = true;
+    newBooking.hidden = true;
+    let retry = false;
+
+    try {
+      for (let poll = 0; poll < 6; poll++) {
+        const result = await checkPayment(
+          api,
+          pendingAttempt,
+          mode === "cancel" && poll === 0,
+        );
+        if (!result) {
+          heading.textContent = "Booking reference unavailable";
+          note.textContent =
+            "If you made a payment, contact us before booking again.";
+          break;
+        }
+        const { status, visit } = result;
+        const service = services.find(({ id }) => id === visit.service);
+        if (service) {
+          get<HTMLInputElement>(
+            `input[name="service"][value="${CSS.escape(service.id)}"]`,
+          ).checked = true;
+          selection = {
+            service,
+            guests: visit.guests,
+            slot: {
+              id: visit.slot,
+              date: visit.date,
+              time: visit.time,
+              remaining: 0,
+            },
+          };
+          quotedTotal = visit.amount;
+          renderSummary();
+        }
+        heading.textContent = paymentMessages[status].heading;
+        note.textContent = paymentMessages[status].note;
+        reference.textContent = `Booking reference ${result.reference}`;
+        reference.hidden = false;
+        if (status !== "pending") {
+          pickAnotherTime = status === "cancelled" || status === "expired";
+          newBooking.hidden = !pickAnotherTime && status !== "paid";
+          newBooking.textContent = pickAnotherTime
+            ? "Choose another time"
+            : "Book another session";
+          break;
+        }
+        if (poll === 5) {
+          heading.textContent = "Payment still processing";
+          retry = true;
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 1_500));
+        }
+      }
+    } catch {
+      heading.textContent = "Payment status unavailable";
+      note.textContent = "Check again before starting another booking.";
+      retry = true;
+    } finally {
+      saving = false;
+      check.disabled = false;
+      check.hidden = !retry;
+    }
+  }
+
+  async function startCheckout(reservation: Selection) {
     if (!api || saving) return;
+    let redirecting = false;
     saving = true;
     submitError.hidden = true;
     next.disabled = true;
-    next.textContent = "Saving reservation…";
+    next.textContent = "Opening Stripe…";
+    submitStatus.textContent = next.textContent;
     const input = {
       slot: reservation.slot.id,
       service: reservation.service.id,
       guests: reservation.guests,
       name: name.value.trim(),
       email: email.value.trim(),
+      action: "checkout",
+      amount:
+        quotedTotal ?? estimatedTotal(reservation.service, reservation.guests),
     };
     const fingerprint = JSON.stringify(input);
     if (requestFingerprint !== fingerprint) attempt = crypto.randomUUID();
@@ -494,42 +601,78 @@ function initialiseBooking(form: HTMLFormElement) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...input, attempt }),
+        signal: AbortSignal.timeout(20_000),
       });
       if (response.status === 422) {
+        const result: unknown = await response.json().catch(() => null);
         submitError.textContent =
-          "Use a test email such as sam@example.com to save a preview reservation.";
+          result &&
+          typeof result === "object" &&
+          "error" in result &&
+          typeof result.error === "string" &&
+          result.error.trim()
+            ? result.error
+            : "Check your guest details and try again.";
         submitError.hidden = false;
         return;
       }
       if (response.status === 409) {
+        const result: unknown = await response.json().catch(() => null);
+        const conflict = result && typeof result === "object" ? result : {};
+        const updatedAmount =
+          "amount" in conflict ? conflict.amount : undefined;
+        if (typeof updatedAmount === "number") {
+          quotedTotal = updatedAmount;
+          renderSummary();
+          submitError.textContent = `The total changed to ${formatSamplePrice(updatedAmount)}. Review the updated total before continuing.`;
+          submitError.hidden = false;
+          return;
+        }
         selection = undefined;
         edit("time");
         slotError.textContent =
-          "This slot is no longer available for your group. Choose another time.";
+          "checkoutExpired" in conflict && conflict.checkoutExpired === true
+            ? "Your checkout window closed. Choose an available time to try again."
+            : "This slot is no longer available for your group. Choose another time.";
         slotError.hidden = false;
         return;
       }
       if (!response.ok) throw new Error();
       const result: unknown = await response.json();
-      if (
-        typeof result !== "object" ||
-        !result ||
-        !("reference" in result) ||
-        typeof result.reference !== "string"
-      )
-        throw new Error();
-      get("[data-booking-reference]").textContent =
-        `Event Schedule reference ${result.reference}.`;
-      show("complete");
+      if (result && typeof result === "object") {
+        const url =
+          "checkoutUrl" in result
+            ? stripeCheckoutUrl(result.checkoutUrl)
+            : undefined;
+        if (url) {
+          location.assign(url.href);
+          redirecting = true;
+          return;
+        }
+        if ("checkStatus" in result && result.checkStatus === true) {
+          const returnUrl = new URL(location.href);
+          returnUrl.searchParams.set("booking", attempt);
+          returnUrl.searchParams.set("checkout", "return");
+          history.replaceState(history.state, "", returnUrl);
+          paymentReturn = readPaymentReturn(returnUrl.searchParams);
+          show("payment");
+          return;
+        }
+      }
+      throw new Error();
     } catch {
       submitError.textContent =
-        "We couldn’t confirm the reservation. Try saving again before starting a new booking.";
+        "Stripe checkout is temporarily unavailable. Try continuing again before starting another booking.";
       submitError.hidden = false;
     } finally {
-      saving = false;
-      if (active === "review") {
-        next.disabled = false;
-        next.textContent = nextLabel.review;
+      if (!redirecting) {
+        saving = false;
+        submitStatus.textContent = "";
+        if (active === "review") {
+          next.disabled = false;
+          next.textContent = nextLabel.review;
+        }
+        if (active === "payment") void showPaymentResult();
       }
     }
   }
@@ -548,12 +691,13 @@ function initialiseBooking(form: HTMLFormElement) {
       edit("time");
     } else if (active === "time" && service && slot && !refreshingTimes) {
       selection = { service, slot, guests: Number(guests.value) };
+      quotedTotal = undefined;
       show("details");
     } else if (active === "details" && selection) {
       submitError.hidden = true;
       show("review");
     } else if (active === "review" && selection) {
-      void save(selection);
+      void startCheckout(selection);
     }
   });
 
@@ -563,8 +707,21 @@ function initialiseBooking(form: HTMLFormElement) {
   )) {
     input.checked = input.value === requested;
   }
-  show("session", false);
   form.inert = false;
+  if (paymentReturn && api) {
+    show("payment");
+    void showPaymentResult();
+  } else {
+    show("session", false);
+  }
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted && active === "review" && saving) {
+      saving = false;
+      next.disabled = false;
+      next.textContent = nextLabel.review;
+      submitStatus.textContent = "";
+    }
+  });
 }
 
 const form = document.querySelector("form#booking-demo");

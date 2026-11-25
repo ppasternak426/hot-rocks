@@ -10,10 +10,6 @@
   font-size: clamp(2rem, 5vw, 3.65rem);
 }
 
-.booking-intro p {
-  margin-top: 0.75rem;
-}
-
 .booking-intro .text-link {
   margin-top: 0.25rem;
 }

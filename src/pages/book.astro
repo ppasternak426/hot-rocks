@@ -38,10 +38,6 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
   <div class="wrap booking-page">
     <header class="booking-intro">
       <h1>Book a sauna session</h1>
-      <p>
-        <strong>Booking preview.</strong> Reservations are for testing. Use
-        sample guest details.
-      </p>
     </header>
 
     <noscript>
@@ -50,7 +46,6 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
 
     <form
       id="booking-demo"
-      autocomplete="off"
       data-services={JSON.stringify(services)}
       data-api={bookingApi}
       inert
@@ -263,16 +258,6 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
           >
             <legend class="sr-only">Guest details</legend>
             <h2 tabindex="-1">Guest details</h2>
-            <p class="booking-lede">
-              Use an example.com, example.net or example.org email address.
-            </p>
-            <button
-              type="button"
-              class="booking-text-button"
-              data-booking-action="sample"
-            >
-              Fill sample details
-            </button>
             <div class="booking-fields">
               <div class="booking-field">
                 <label for="booking-name">Full name</label>
@@ -280,6 +265,7 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
                   id="booking-name"
                   name="full-name"
                   type="text"
+                  autocomplete="name"
                   required
                   maxlength="100"
                 />
@@ -290,6 +276,7 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
                   id="booking-email"
                   name="email"
                   type="email"
+                  autocomplete="email"
                   autocapitalize="none"
                   spellcheck="false"
                   required
@@ -309,7 +296,7 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
             <legend class="sr-only">Review your booking</legend>
             <h2 tabindex="-1">Review your booking</h2>
             <p class="booking-lede">
-              Check the details before saving your test reservation.
+              You’ll enter your payment details on Stripe.
             </p>
             <section
               class="booking-review-block"
@@ -331,24 +318,41 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
               data-booking-submit-error
               hidden
             ></p>
+            <p class="sr-only" role="status" data-booking-submit-status></p>
           </fieldset>
 
           <fieldset
-            data-booking-step="complete"
+            data-booking-step="payment"
             class="booking-step"
             hidden
             disabled
           >
-            <legend class="sr-only">Test reservation saved</legend>
-            <h2 tabindex="-1">Test reservation saved</h2>
-            <p class="booking-lede" data-booking-reference></p>
+            <legend class="sr-only">Payment status</legend>
+            <h2 tabindex="-1" data-booking-payment-heading>
+              Checking payment
+            </h2>
+            <div role="status" aria-atomic="true">
+              <p class="booking-lede" data-booking-payment-note>
+                We’re checking the payment status for your booking.
+              </p>
+              <p class="booking-lede" data-booking-payment-reference hidden></p>
+            </div>
             <div class="booking-complete-actions">
               <button
                 type="button"
                 class="button"
-                data-booking-action="restart"
+                data-booking-action="check-payment"
+                hidden
               >
-                Start another test booking
+                Check payment status
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-booking-action="new-payment-booking"
+                hidden
+              >
+                Choose another time
               </button>
             </div>
           </fieldset>
@@ -371,7 +375,7 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
             </h2>
             <p>Gawley’s Gate, Lough Neagh</p>
             <p class="booking-empty" data-booking-empty>
-              Choose a session to start your sample booking.
+              Choose a session to start your booking.
             </p>
             <div class="booking-summary-selection" role="status">
               <strong data-booking-summary-session hidden></strong>
@@ -379,7 +383,7 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
             </div>
             <dl class="booking-totals" data-booking-totals hidden>
               <div class="booking-total">
-                <dt>Sample total</dt>
+                <dt>Total</dt>
                 <dd data-booking-total></dd>
               </div>
             </dl>

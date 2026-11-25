@@ -13,12 +13,6 @@ export const bookingSteps = [
   { id: "review", label: "Review" },
 ] as const;
 
-export const demoGuest = {
-  name: "Sam Taylor",
-  email: "sam@example.com",
-  phone: "07700 900123",
-};
-
 const currency = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
