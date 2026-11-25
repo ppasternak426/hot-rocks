@@ -4,18 +4,20 @@ import { Image } from "astro:assets";
 import view from "../assets/home/lough-neagh-sauna.jpg";
 import {
   bookingSteps,
-  demoCoupon,
   formatSampleDuration,
   formatSamplePrice,
   sessionGroups,
 } from "../data/booking-demo";
 import SiteLayout from "../layouts/SiteLayout.astro";
+import { onRequestSessionId } from "../data/session-comparison";
 import { getSessionCatalog } from "../data/sessions";
 import "../styles/booking.css";
 
 const { all: sessions } = await getSessionCatalog();
 const services = sessions.flatMap(({ id, name, bookingDemo }) =>
-  bookingDemo ? [{ ...bookingDemo, id, name }] : [],
+  bookingDemo && id !== onRequestSessionId
+    ? [{ ...bookingDemo, id, name }]
+    : [],
 );
 const groups = sessionGroups
   .map((group) => ({
@@ -23,30 +25,34 @@ const groups = sessionGroups
     services: services.filter((service) => service.group === group.id),
   }))
   .filter((group) => group.services.length > 0);
-const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
+const unconfiguredSessions = sessions.filter(
+  ({ bookingDemo, id }) => !bookingDemo || id === onRequestSessionId,
+);
+const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
 ---
 
 <SiteLayout
   title="Book a Session"
-  description="Try the Hot Rocks Sauna booking flow with sample availability and prices."
+  description="Choose your sauna session, group size and a time from the booking calendar."
 >
   <div class="wrap booking-page">
     <header class="booking-intro">
       <h1>Book a sauna session</h1>
       <p>
-        <strong>Booking demo.</strong> Dates, availability and prices are
-        examples. Use sample guest details.
+        <strong>Booking preview.</strong> Reservations are for testing. Use
+        sample guest details.
       </p>
     </header>
 
     <noscript>
-      <p>Enable JavaScript to try the booking demo.</p>
+      <p>Enable JavaScript to choose a booking time.</p>
     </noscript>
 
     <form
       id="booking-demo"
       autocomplete="off"
       data-services={JSON.stringify(services)}
+      data-api={bookingApi}
       inert
     >
       <ol class="booking-progress" aria-label="Booking progress">
@@ -88,7 +94,7 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             <legend class="sr-only">Choose a session</legend>
             <h2 tabindex="-1">Choose a session</h2>
             <p class="booking-lede">
-              Choose a session to try the booking demo.
+              Choose the sauna session you’d like to book.
             </p>
             {groups.map(({ label, services }) => (
               <fieldset class="booking-service-group">
@@ -120,7 +126,7 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             {unconfiguredSessions.length > 0 && (
               <div class="booking-service-group">
                 <h3>More sessions</h3>
-                <p>Contact us for details about these sessions.</p>
+                <p>Available by request.</p>
                 <ul>
                   {unconfiguredSessions.map((session) => (
                     <li>
@@ -130,8 +136,11 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
                     </li>
                   ))}
                 </ul>
-                <a class="text-link" href={sitePath("/visit/#contact")}>
-                  Contact us
+                <a
+                  class="text-link booking-contact-link"
+                  href={sitePath("/visit/#contact")}
+                >
+                  <span>Contact us</span>
                 </a>
               </div>
             )}
@@ -146,11 +155,8 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
           >
             <legend class="sr-only">Choose a date and time</legend>
             <h2 tabindex="-1">Choose a date and time</h2>
-            <p class="booking-lede">Sample slots are shown in UK time.</p>
+            <p class="booking-lede">Times are shown in UK time.</p>
             <p class="booking-picked-service" data-booking-picked-service></p>
-            <p data-booking-date-reset hidden>
-              The session changed. Choose a new date and time.
-            </p>
             <div class="booking-field booking-field-short">
               <label id="booking-guests-label" for="booking-guests">
                 Guests
@@ -193,18 +199,52 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
               ></div>
             </div>
             <fieldset class="booking-picker">
-              <legend>Sample dates</legend>
-              <div
-                class="booking-choices booking-dates"
-                data-booking-dates
-              ></div>
+              <legend>Available dates</legend>
+              <div class="booking-calendar-header">
+                <button
+                  type="button"
+                  class="booking-text-button"
+                  data-booking-action="previous-month"
+                  aria-label="Previous month"
+                >
+                  ‹
+                </button>
+                <p data-booking-month aria-live="polite"></p>
+                <button
+                  type="button"
+                  class="booking-text-button"
+                  data-booking-action="next-month"
+                  aria-label="Next month"
+                >
+                  ›
+                </button>
+              </div>
+              <div class="booking-calendar" data-booking-dates></div>
+              <p role="status" data-booking-date-status></p>
             </fieldset>
-            <fieldset class="booking-picker">
-              <legend>Sample times</legend>
-              <div class="booking-choices" data-booking-times></div>
-              <p role="status" data-booking-times-status>
+            <fieldset
+              class="booking-picker"
+              aria-describedby="booking-times-caption"
+            >
+              <legend>Available times</legend>
+              <p
+                id="booking-times-caption"
+                class="booking-times-caption"
+                data-booking-times-caption
+              >
                 Choose a date to see its times.
               </p>
+              <div class="booking-time-panel">
+                <div
+                  id="booking-time-options"
+                  class="booking-choices booking-time-options"
+                  data-booking-times
+                ></div>
+                <div class="booking-time-loading" aria-hidden="true">
+                  <span class="booking-time-loading-track"></span>
+                </div>
+              </div>
+              <p class="sr-only" role="status" data-booking-times-status></p>
             </fieldset>
             <p
               class="booking-error"
@@ -223,7 +263,9 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
           >
             <legend class="sr-only">Guest details</legend>
             <h2 tabindex="-1">Guest details</h2>
-            <p class="booking-lede">Use example details to try the form.</p>
+            <p class="booking-lede">
+              Use an example.com, example.net or example.org email address.
+            </p>
             <button
               type="button"
               class="booking-text-button"
@@ -254,27 +296,6 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
                   maxlength="254"
                 />
               </div>
-              <div class="booking-field">
-                <label for="booking-phone">Phone number</label>
-                <input
-                  id="booking-phone"
-                  name="phone"
-                  type="tel"
-                  required
-                  maxlength="30"
-                />
-              </div>
-              <div class="booking-field">
-                <label for="booking-notes">
-                  Booking notes <small>(optional)</small>
-                </label>
-                <textarea
-                  id="booking-notes"
-                  name="notes"
-                  rows="3"
-                  maxlength="400"
-                ></textarea>
-              </div>
             </div>
           </fieldset>
 
@@ -288,7 +309,7 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             <legend class="sr-only">Review your booking</legend>
             <h2 tabindex="-1">Review your booking</h2>
             <p class="booking-lede">
-              Check the details before completing the demo.
+              Check the details before saving your test reservation.
             </p>
             <section
               class="booking-review-block"
@@ -296,7 +317,6 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             >
               <h3 id="review-details">Guest details</h3>
               <p data-booking-guest-summary></p>
-              <p data-booking-guest-notes hidden></p>
               <button
                 type="button"
                 class="booking-text-button"
@@ -305,66 +325,12 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
                 Edit guest details
               </button>
             </section>
-            <section
-              class="booking-review-block"
-              aria-labelledby="review-coupon"
-            >
-              <h3 id="review-coupon">Coupon</h3>
-              <div class="booking-field">
-                <label for="booking-coupon">
-                  Sample coupon code <small>(optional)</small>
-                </label>
-                <div class="booking-coupon">
-                  <input
-                    id="booking-coupon"
-                    name="coupon"
-                    type="text"
-                    spellcheck="false"
-                    aria-describedby="booking-coupon-hint"
-                    maxlength="24"
-                  />
-                  <button
-                    type="button"
-                    class="button button-outline"
-                    data-booking-action="coupon"
-                  >
-                    Apply
-                  </button>
-                </div>
-                <p id="booking-coupon-hint">
-                  Try <strong>{demoCoupon}</strong> for a sample discount.
-                </p>
-                <p role="status" data-booking-coupon-status></p>
-              </div>
-            </section>
-            <section
-              class="booking-review-block"
-              aria-labelledby="review-payment"
-            >
-              <h3 id="review-payment">Payment method</h3>
-              <p>
-                <strong>Credit or debit card (Stripe)</strong> · Simulated
-              </p>
-              <p>
-                The demo uses a 25% sample deposit. Card details are simulated.
-              </p>
-              <label class="booking-check">
-                <input type="checkbox" name="pay-full" />
-                <span>Pay the full sample total now</span>
-              </label>
-              <p>
-                Sample amount due now <strong data-booking-due>£0.00</strong>
-              </p>
-            </section>
-            <div class="booking-terms">
-              <label class="booking-check">
-                <input type="checkbox" name="terms" required />
-                <span>I agree to the booking terms for this demo.</span>
-              </label>
-              <a href={sitePath("/terms/")} target="_blank" rel="noopener">
-                Read the booking terms (opens in a new tab)
-              </a>
-            </div>
+            <p
+              class="booking-error"
+              role="alert"
+              data-booking-submit-error
+              hidden
+            ></p>
           </fieldset>
 
           <fieldset
@@ -373,26 +339,16 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             hidden
             disabled
           >
-            <legend class="sr-only">Booking demo complete</legend>
-            <h2 tabindex="-1">Booking demo complete</h2>
-            <p class="booking-lede">
-              Your sample booking is ready to review. No reservation or payment
-              was made.
-            </p>
+            <legend class="sr-only">Test reservation saved</legend>
+            <h2 tabindex="-1">Test reservation saved</h2>
+            <p class="booking-lede" data-booking-reference></p>
             <div class="booking-complete-actions">
-              <button
-                type="button"
-                class="button button-outline"
-                data-booking-action="calendar"
-              >
-                Download sample calendar file
-              </button>
               <button
                 type="button"
                 class="button"
                 data-booking-action="restart"
               >
-                Start another demo
+                Start another test booking
               </button>
             </div>
           </fieldset>
@@ -417,30 +373,16 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
             <p class="booking-empty" data-booking-empty>
               Choose a session to start your sample booking.
             </p>
-            <ul class="booking-summary-list" data-booking-cart></ul>
-            <p class="booking-draft" data-booking-draft hidden></p>
+            <div class="booking-summary-selection" role="status">
+              <strong data-booking-summary-session hidden></strong>
+              <p data-booking-summary-date hidden></p>
+            </div>
             <dl class="booking-totals" data-booking-totals hidden>
-              <div>
-                <dt>Sample subtotal</dt>
-                <dd data-booking-subtotal></dd>
-              </div>
-              <div data-booking-discount-row hidden>
-                <dt>Sample discount</dt>
-                <dd data-booking-discount></dd>
-              </div>
               <div class="booking-total">
                 <dt>Sample total</dt>
                 <dd data-booking-total></dd>
               </div>
             </dl>
-            <button
-              type="button"
-              class="booking-text-button"
-              data-booking-action="add"
-              hidden
-            >
-              Add another session
-            </button>
           </div>
         </aside>
         <div class="booking-actions" data-booking-actions>
@@ -471,5 +413,5 @@ const unconfiguredSessions = sessions.filter(({ bookingDemo }) => !bookingDemo);
 </SiteLayout>
 
 <script>
-  import "../scripts/booking-demo";
+  import "../scripts/booking";
 </script>

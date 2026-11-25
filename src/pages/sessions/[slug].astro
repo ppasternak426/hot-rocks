@@ -53,14 +53,10 @@ if (paragraphs.length === 1 && sentences.length >= 4) {
       <a
         class="button"
         href={sitePath(
-          session.bookingDemo
-            ? `/book/?session=${session.id}`
-            : "/visit/#contact",
+          isByRequest ? "/visit/#contact" : `/book/?session=${session.id}`,
         )}
       >
-        {session.bookingDemo
-          ? "Book this session"
-          : "Enquire about this session"}
+        {isByRequest ? "Enquire about this session" : "Book this session"}
       </a>
       <a
         class="text-link text-link-back"

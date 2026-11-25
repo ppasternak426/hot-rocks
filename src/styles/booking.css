@@ -170,6 +170,21 @@ button.booking-progress-entry:focus-visible {
   margin-top: 1.75rem;
 }
 
+.text-link.booking-contact-link[href] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.text-link.booking-contact-link[href]:is(:hover, :focus-visible) {
+  background-color: transparent;
+}
+
+.booking-contact-link span {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 .booking-service-group legend,
 .booking-picker legend,
 .booking-field > label {
@@ -380,6 +395,102 @@ button.booking-progress-entry:focus-visible {
   accent-color: var(--espresso);
 }
 
+.booking-times-caption {
+  margin-block-end: 0.5rem;
+  color: var(--walnut);
+}
+
+.booking-time-panel {
+  position: relative;
+}
+
+.booking-time-options {
+  min-block-size: 46px;
+  align-items: flex-start;
+}
+
+.booking-time-options[aria-busy="true"] {
+  opacity: 0.64;
+}
+
+.booking-time-options label:has(input:disabled) {
+  cursor: default;
+}
+
+.booking-time-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  place-items: center start;
+  background: var(--milk);
+  pointer-events: none;
+}
+
+.booking-time-options[aria-busy="true"] + .booking-time-loading {
+  display: grid;
+  animation: booking-loading-reveal 0s 180ms both;
+}
+
+.booking-time-loading-track {
+  display: block;
+  inline-size: min(7rem, 100%);
+  block-size: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.booking-time-loading-track::after {
+  content: "";
+  display: block;
+  inline-size: 34%;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--walnut);
+  transform: translateX(100%);
+}
+
+@keyframes booking-loading-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .booking-time-options[aria-busy="true"] + .booking-time-loading {
+    animation-duration: 140ms;
+    animation-timing-function: ease-out;
+  }
+
+  .booking-time-loading-track::after {
+    animation: booking-loading-progress 1s ease-in-out 180ms infinite;
+  }
+}
+
+@keyframes booking-loading-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+@media (forced-colors: active) {
+  .booking-time-loading-track {
+    forced-color-adjust: none;
+    background: GrayText;
+  }
+
+  .booking-time-loading-track::after {
+    background: Highlight;
+  }
+}
+
 #booking-demo [role="status"]:empty {
   margin: 0;
 }
@@ -434,19 +545,18 @@ button.booking-progress-entry:focus-visible {
   margin-top: 0.45rem;
 }
 
-.booking-empty,
-.booking-draft {
+.booking-empty {
   margin-top: 0.85rem;
 }
 
-.booking-summary-list li,
+.booking-summary-selection:has([data-booking-summary-session]:not([hidden])),
 .booking-totals {
   border-top: 1px solid var(--line);
   margin-top: 0.65rem;
   padding-top: 0.65rem;
 }
 
-.booking-summary-list p {
+.booking-summary-selection p {
   margin-block: 0.15rem 0;
 }
 
@@ -543,7 +653,7 @@ button.booking-progress-entry:focus-visible {
     object-position: center 45%;
   }
 
-  .booking-summary-list li,
+  .booking-summary-selection:has([data-booking-summary-session]:not([hidden])),
   .booking-totals,
   .booking-total {
     border-color: #b7a58b;
@@ -561,4 +671,55 @@ button.booking-progress-entry:focus-visible {
   .booking-fields .booking-field:last-child {
     grid-column: 1 / -1;
   }
+}
+
+.booking-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.booking-calendar-header button {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 1.5rem;
+}
+
+.booking-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.2rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.booking-calendar span {
+  font-size: 0.8125rem;
+  color: var(--walnut);
+}
+
+.booking-calendar button {
+  min-height: 44px;
+  border: 1px solid var(--walnut);
+  border-radius: 0.25rem;
+  background: var(--toast);
+  color: var(--espresso);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.booking-calendar button:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: var(--walnut);
+  font-weight: 400;
+  cursor: default;
+}
+
+.booking-calendar button[aria-pressed="true"] {
+  background: var(--espresso);
+  color: var(--milk);
 }

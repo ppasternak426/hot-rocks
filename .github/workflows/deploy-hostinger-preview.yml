@@ -12,6 +12,7 @@ concurrency:
 
 env:
   PREVIEW_DOMAIN: tender-palegoldenrod-porcupine-90.hostingersite.com
+  PUBLIC_BOOKING_API_URL: https://aquatic-paleturquoise-albatross-43.hostingersite.com/hot-rocks-booking.php
 
 jobs:
   deploy:

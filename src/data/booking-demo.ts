@@ -19,15 +19,6 @@ export const demoGuest = {
   phone: "07700 900123",
 };
 
-export const demoTimes = [
-  ["09:30", "11:00", "13:30", "16:00"],
-  ["10:00", "12:30", "15:00"],
-  [],
-  ["10:30", "14:00", "17:00"],
-];
-
-export const demoCoupon = "DEMO10";
-
 const currency = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "GBP",
