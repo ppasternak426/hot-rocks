@@ -273,9 +273,8 @@ try {
     $attempt = $data['attempt'] ?? null;
     if (!is_string($slot) || strlen($slot) > 80 || !is_string($name) || trim($name) === '' || mb_strlen($name) > 100
         || !is_string($email) || strlen($email) > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)
-        || !preg_match('/@example\.(com|net|org)$/iD', $email)
         || !validBookingAttempt($attempt)) {
-        sendJson(['error' => 'Enter a name and a test email such as sam@example.com.'], 422);
+        sendJson(['error' => 'Check your booking details and try again.'], 422);
     }
 
     $rateKey = 'hot-rocks-preview:'.hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '');
