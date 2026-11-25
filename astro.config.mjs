@@ -14,6 +14,9 @@ const redirects = {
 export default defineConfig({
   site: "https://thehotrockssauna.co.uk",
   redirects,
+  build: {
+    inlineStylesheets: "always",
+  },
   integrations: [
     {
       name: "base-aware-redirects",

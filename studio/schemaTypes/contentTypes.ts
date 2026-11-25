@@ -185,7 +185,7 @@ export const contentTypes = [
     fields: [
       heading(),
       intro(),
-      {...photo(), title: 'Hero photo'},
+      {...photo(), title: 'Hero photo', options: {hotspot: true}},
       defineField({name: 'sessionsHeading', type: 'string', validation: (r) => r.required()}),
       defineField({name: 'sessionsIntro', type: 'text', validation: (r) => r.required()}),
       defineField({

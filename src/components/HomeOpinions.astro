@@ -38,7 +38,7 @@ const allSamples = opinions.every(({ isSample }) => isSample);
             </svg>
           </button>
         )}
-        <div class="opinion-viewport" data-scroll-reveal>
+        <div class="opinion-viewport">
           <ul id="opinion-list" class="opinion-grid" role="list">
             {opinions.map(({ title, quote, authorName, rating, isSample }) => (
               <li class="opinion-card" data-opinion-card>

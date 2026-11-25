@@ -1,6 +1,8 @@
 ---
 import { sitePath } from "../data/site-path";
+import { createImageUrlBuilder } from "@sanity/image-url";
 import { Image } from "astro:assets";
+import { sanityClient } from "sanity:client";
 import saunaBenefitsPhoto from "../assets/home/sauna-benefits-ritual.jpeg";
 import FeatureCard from "../components/FeatureCard.astro";
 import HomeEvents from "../components/HomeEvents.astro";
@@ -22,6 +24,42 @@ const [content, { featured, all: sessions }, featuredEvents] =
     getFeaturedEvents(),
   ]);
 const communalSession = sessions.find(({ id }) => id === "communal");
+const { photo } = content;
+const mobileHeroRatio = 4 / 7;
+const mobileHeroMaxWidth = Math.max(
+  1,
+  Math.floor(
+    Math.min(
+      800,
+      photo.width * (1 - (photo.crop?.left ?? 0) - (photo.crop?.right ?? 0)),
+      photo.height *
+        (1 - (photo.crop?.top ?? 0) - (photo.crop?.bottom ?? 0)) *
+        mobileHeroRatio,
+    ),
+  ),
+);
+const mobileHero = createImageUrlBuilder(sanityClient)
+  .image({
+    asset: { url: photo.url },
+    crop: photo.crop ?? undefined,
+    hotspot: photo.hotspot ?? { x: 0.54, y: 0.5, width: 0, height: 0 },
+  })
+  .fit("crop")
+  .auto("format")
+  .quality(72);
+const mobileHeroSrcset = [
+  ...[320, 400, 480, 560, 640, 720].filter(
+    (width) => width < mobileHeroMaxWidth,
+  ),
+  mobileHeroMaxWidth,
+]
+  .map((width) => {
+    const height = Math.round(width / mobileHeroRatio);
+    return `${mobileHero.size(width, height).url()} ${width}w`;
+  })
+  .join(", ");
+const benefitsImageSizes =
+  "(max-width: 47.99rem) clamp(46rem, 205vw, 57.5rem), max(100vw, 53rem)";
 const [sessionsIntroStart, recommendation, sessionsIntroEnd] =
   content.sessionsIntro.split(/(start with a shared session)/i);
 
@@ -39,14 +77,21 @@ const benefitIcons = {
 >
   <section class="home-hero" aria-labelledby="home-title">
     <div class="home-hero-photo">
-      <SanityPhoto
-        image={content.photo}
-        maxWidth={1600}
-        sizes="max(100vw, 75svh)"
-        quality={78}
-        priority
-        transitionImage
-      />
+      <picture>
+        <source
+          media="(width < 48rem) and (orientation: portrait)"
+          sizes="max(100vw, 57svh)"
+          srcset={mobileHeroSrcset}
+        />
+        <SanityPhoto
+          image={photo}
+          maxWidth={1600}
+          sizes="max(100vw, 75svh)"
+          quality={78}
+          priority
+          transitionImage
+        />
+      </picture>
     </div>
     <div class="wrap home-hero-copy">
       <h1 id="home-title">{content.heading}</h1>
@@ -123,8 +168,8 @@ const benefitIcons = {
         class="benefits-backdrop"
         image={content.benefitsBackground}
         maxWidth={1600}
-        sizes="max(100vw, 68rem)"
-        quality={80}
+        sizes={benefitsImageSizes}
+        quality={72}
         scrollReveal
       />
     ) : (
@@ -132,10 +177,10 @@ const benefitIcons = {
         class="benefits-backdrop"
         src={saunaBenefitsPhoto}
         alt=""
-        widths={[800, 1120, 1440, 1600]}
-        sizes="max(100vw, 68rem)"
+        widths={[800, 960, 1200, 1440, 1600]}
+        sizes={benefitsImageSizes}
         format="webp"
-        quality={80}
+        quality={72}
         data-scroll-reveal
       />
     )}

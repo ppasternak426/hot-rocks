@@ -19,6 +19,25 @@ const assetFields = `
 `;
 const photoFields = `alt, ${assetFields}`;
 const photoProjection = `{ ${photoFields} }`;
+const imageFraction = z.number().min(0).max(1);
+const heroPhotoSchema = photoSchema.extend({
+  crop: z
+    .object({
+      left: imageFraction,
+      right: imageFraction,
+      top: imageFraction,
+      bottom: imageFraction,
+    })
+    .nullish(),
+  hotspot: z
+    .object({
+      x: imageFraction,
+      y: imageFraction,
+      width: imageFraction,
+      height: imageFraction,
+    })
+    .nullish(),
+});
 const backgroundPhotoProjection = `{ "alt": "", ${assetFields} }`;
 const backgroundPhotoSchema = photoSchema
   .extend({ alt: z.literal("") })
@@ -70,7 +89,7 @@ const visitSchema = z.object({
 const homeSchema = z.object({
   heading: text,
   intro: text,
-  photo: photoSchema,
+  photo: heroPhotoSchema,
   sessionsHeading: text,
   sessionsIntro: text,
   benefitsBackground: backgroundPhotoSchema,
@@ -140,7 +159,7 @@ async function fetchHomeContent() {
   return homeSchema.parse(
     await fetchContent(
       "homeContent",
-      `{ heading, intro, photo ${photoProjection}, sessionsHeading, sessionsIntro,
+      `{ heading, intro, photo { ${photoFields}, crop, hotspot }, sessionsHeading, sessionsIntro,
       hostsHeading, hostsIntro, hostsPhoto ${photoProjection},
       benefitsBackground.asset-> != null => { benefitsBackground ${backgroundPhotoProjection} },
       visitBackground.asset-> != null => { visitBackground ${backgroundPhotoProjection} } }`,

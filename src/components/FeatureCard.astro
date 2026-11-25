@@ -14,7 +14,7 @@ interface Props {
 }
 
 const { href, title, headingId, description, image } = Astro.props;
-const sizes = "(max-width: 42rem) 90vw, (max-width: 60rem) 45vw, 26rem";
+const sizes = "auto, (max-width: 42rem) 90vw, (max-width: 60rem) 45vw, 26rem";
 ---
 
 <li class="feature-card" data-scroll-reveal>
@@ -22,7 +22,12 @@ const sizes = "(max-width: 42rem) 90vw, (max-width: 60rem) 45vw, 26rem";
     <a class="feature-card-link" href={href} aria-labelledby={headingId}>
       <div class="feature-card-media">
         {image ? (
-          <SanityPhoto image={image} maxWidth={800} sizes={sizes} />
+          <SanityPhoto
+            image={image}
+            maxWidth={800}
+            sizes={sizes}
+            quality={72}
+          />
         ) : (
           <Image
             src={saunaPhoto}
