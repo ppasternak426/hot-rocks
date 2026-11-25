@@ -9,16 +9,13 @@ import {
   sessionGroups,
 } from "../data/booking-demo";
 import SiteLayout from "../layouts/SiteLayout.astro";
-import { onRequestSessionId } from "../data/session-comparison";
-import { getSessionCatalog } from "../data/sessions";
+import { getSessionCatalog, onlineBooking } from "../data/sessions";
 import "../styles/booking.css";
 
 const { all: sessions } = await getSessionCatalog();
-const services = sessions.flatMap(({ id, name, bookingDemo }) =>
-  bookingDemo && id !== onRequestSessionId
-    ? [{ ...bookingDemo, id, name }]
-    : [],
-);
+const services = sessions
+  .map(onlineBooking)
+  .filter((service) => service !== undefined);
 const groups = sessionGroups
   .map((group) => ({
     ...group,
@@ -26,7 +23,7 @@ const groups = sessionGroups
   }))
   .filter((group) => group.services.length > 0);
 const unconfiguredSessions = sessions.filter(
-  ({ bookingDemo, id }) => !bookingDemo || id === onRequestSessionId,
+  (session) => !onlineBooking(session),
 );
 const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
 ---
@@ -109,10 +106,14 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
                         {service.note && <> · {service.note}</>}
                       </span>
                     </span>
-                    <span class="booking-price">
-                      <strong>{formatSamplePrice(service.samplePrice)}</strong>
-                      <span>per {service.billing}</span>
-                    </span>
+                    {!service.linked && (
+                      <span class="booking-price">
+                        <strong>
+                          {formatSamplePrice(service.samplePrice)}
+                        </strong>
+                        <span>per {service.billing}</span>
+                      </span>
+                    )}
                   </label>
                 ))}
               </fieldset>
@@ -216,6 +217,14 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
               </div>
               <div class="booking-calendar" data-booking-dates></div>
               <p role="status" data-booking-date-status></p>
+              <a
+                class="text-link booking-contact-link"
+                href={sitePath("/visit/#contact")}
+                data-booking-availability-contact
+                hidden
+              >
+                <span>Contact us about this session</span>
+              </a>
             </fieldset>
             <fieldset
               class="booking-picker"

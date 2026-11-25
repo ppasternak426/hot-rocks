@@ -1,4 +1,6 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
+
+const sourceSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 export const saunaSessionType = defineType({
   name: 'saunaSession',
@@ -37,9 +39,72 @@ export const saunaSessionType = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'bookingSource',
+      title: 'Booking source',
+      description: 'Link this session to inventory in Event Schedule.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'kind',
+          title: 'Booking type',
+          type: 'string',
+          options: {
+            list: [
+              {title: 'Event tickets', value: 'tickets'},
+              {title: 'Private appointment', value: 'appointment'},
+              {title: 'By request', value: 'request'},
+            ],
+          },
+          validation: (rule) => rule.required(),
+        }),
+        defineField({
+          name: 'eventSlugs',
+          title: 'Event slugs',
+          description:
+            'Copy the event slug from the URL. It comes after the shared Hot Rocks schedule name and before any event ID or date. Use one paid GBP ticket type, set unpaid tickets to expire after one hour, and add each recurring series once.',
+          type: 'array',
+          of: [defineArrayMember({type: 'string', validation: (rule) => rule.regex(sourceSlug)})],
+          hidden: ({parent}) => parent?.kind !== 'tickets',
+          validation: (rule) => rule.unique().max(24),
+        }),
+        defineField({
+          name: 'addonName',
+          title: 'Required add-on',
+          description:
+            'For a package, enter the exact add-on name from Event Schedule. One add-on is reserved per booking.',
+          type: 'string',
+          hidden: ({parent}) => parent?.kind !== 'tickets',
+          validation: (rule) => rule.max(120),
+        }),
+        defineField({
+          name: 'appointmentSlug',
+          title: 'Appointment type slug',
+          description:
+            'Copy the last part of the appointment type’s public booking URL from the private Hot Rocks schedule. Use a paid GBP appointment with capacity one and no required extra questions or approval.',
+          type: 'string',
+          hidden: ({parent}) => parent?.kind !== 'appointment',
+          validation: (rule) => rule.regex(sourceSlug),
+        }),
+      ],
+      validation: (rule) =>
+        rule.custom((source, {document}) => {
+          if (!source || source.kind === 'request') return true
+          if (!document?.bookingDemo) return 'Complete the booking details for this session.'
+          if (
+            source.kind === 'tickets' &&
+            (!Array.isArray(source.eventSlugs) || !source.eventSlugs.length)
+          )
+            return 'Add at least one event slug.'
+          if (source.kind === 'appointment' && !source.appointmentSlug)
+            return 'Enter the appointment type slug.'
+          return true
+        }),
+    }),
+    defineField({
       name: 'bookingDemo',
-      title: 'Booking demo settings',
-      description: 'Add sample booking details to show this session in the booking demo.',
+      title: 'Booking details',
+      description:
+        'Set the category and guest limits. For linked sessions, Event Schedule supplies the checkout price.',
       type: 'object',
       fields: [
         defineField({
@@ -63,9 +128,10 @@ export const saunaSessionType = defineType({
         }),
         defineField({
           name: 'samplePrice',
-          title: 'Sample price in pence',
+          title: 'Legacy price in pence',
+          hidden: ({document}) => Boolean(document?.bookingSource),
           type: 'number',
-          validation: (rule) => rule.required().integer().min(0),
+          validation: (rule) => rule.integer().min(0),
         }),
         defineField({
           name: 'billing',

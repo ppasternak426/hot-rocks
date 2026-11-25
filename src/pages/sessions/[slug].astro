@@ -2,11 +2,8 @@
 import { sitePath } from "../../data/site-path";
 import PageIntro from "../../components/PageIntro.astro";
 import SanityPhoto from "../../components/SanityPhoto.astro";
-import {
-  onRequestSessionId,
-  sessionComparison,
-} from "../../data/session-comparison";
-import { getSessionCatalog } from "../../data/sessions";
+import { sessionComparison } from "../../data/session-comparison";
+import { getSessionCatalog, onlineBooking } from "../../data/sessions";
 import SiteLayout from "../../layouts/SiteLayout.astro";
 
 export async function getStaticPaths() {
@@ -18,7 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { session } = Astro.props;
-const isByRequest = session.id === onRequestSessionId || !session.bookingDemo;
+const isByRequest = !onlineBooking(session);
 const facts = sessionComparison[session.id];
 const paragraphs = session.description.trim().split(/\n+/);
 const sentences = Array.from(

@@ -2,11 +2,10 @@
 import { sitePath } from "../data/site-path";
 import PageIntro from "../components/PageIntro.astro";
 import {
-  onRequestSessionId,
   sessionCategories,
   sessionComparison,
 } from "../data/session-comparison";
-import { getSessionCatalog } from "../data/sessions";
+import { getSessionCatalog, onlineBooking } from "../data/sessions";
 import SiteLayout from "../layouts/SiteLayout.astro";
 
 const { all: sessions } = await getSessionCatalog();
@@ -56,12 +55,12 @@ const groups = sessionCategories
       <div class="wrap">
         <h2 id={`${category}-heading`}>{label}</h2>
         <ul class="ruled-list session-list" role="list">
-          {sessions.map(({ id, name, summary, bookingDemo }) => {
+          {sessions.map((session) => {
+            const { id, name, summary } = session;
             const facts = sessionComparison[id];
-            const booking =
-              id === onRequestSessionId || !bookingDemo
-                ? "By enquiry"
-                : "Book online";
+            const booking = onlineBooking(session)
+              ? "Book online"
+              : "By enquiry";
             return (
               <li id={id} tabindex="-1">
                 <a

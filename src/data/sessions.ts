@@ -1,5 +1,6 @@
 import { z } from "astro/zod";
 import { sanityClient } from "sanity:client";
+import { onRequestSessionId } from "./session-comparison";
 
 const bookingDemoSchema = z
   .object({
@@ -18,6 +19,7 @@ const bookingDemoSchema = z
 export type DemoService = z.infer<typeof bookingDemoSchema> & {
   id: string;
   name: string;
+  linked: boolean;
 };
 
 const sessionSchema = z.object({
@@ -27,6 +29,7 @@ const sessionSchema = z.object({
   summary: z.string().min(1),
   description: z.string().min(1),
   bookingDemo: bookingDemoSchema.nullable(),
+  bookingMode: z.enum(["tickets", "appointment", "request"]).nullable(),
   image: z.object({
     url: z.url(),
     alt: z.string().min(1),
@@ -47,7 +50,8 @@ const catalogQuery = `{
     "name": title,
     summary,
     description,
-    bookingDemo,
+    bookingDemo { ..., "samplePrice": coalesce(samplePrice, 0) },
+    "bookingMode": select(bookingSource.kind in ["tickets", "appointment", "request"] => bookingSource.kind, null),
     image {
       alt,
       "url": asset->url,
@@ -60,6 +64,30 @@ const catalogQuery = `{
     []
   )
 }`;
+
+const legacyBookingIds = new Set([
+  "communal",
+  "textile-free-sauna",
+  "slow-sauna",
+  "slow-sauna-textile-free",
+  "rituals",
+  "whisking-it-up",
+  "private",
+  "sauna-and-steak-for-two",
+]);
+
+export function onlineBooking({
+  id,
+  name,
+  bookingDemo,
+  bookingMode,
+}: z.infer<typeof sessionSchema>): DemoService | undefined {
+  if (!bookingDemo || id === onRequestSessionId || bookingMode === "request")
+    return;
+  if (bookingMode || legacyBookingIds.has(id)) {
+    return { ...bookingDemo, id, name, linked: bookingMode !== null };
+  }
+}
 
 export async function getSessionCatalog() {
   const data = await sanityClient.fetch<unknown>(

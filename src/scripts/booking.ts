@@ -15,6 +15,7 @@ interface Slot {
   date: string;
   time: string;
   remaining: number;
+  amount?: number;
 }
 
 interface Selection {
@@ -73,7 +74,11 @@ function isSlot(item: unknown): item is Slot {
     /^\d{2}:\d{2}$/.test(item.time) &&
     "remaining" in item &&
     typeof item.remaining === "number" &&
-    Number.isInteger(item.remaining)
+    Number.isInteger(item.remaining) &&
+    (!("amount" in item) ||
+      (typeof item.amount === "number" &&
+        Number.isSafeInteger(item.amount) &&
+        item.amount > 0))
   );
 }
 
@@ -93,6 +98,9 @@ function initialiseBooking(form: HTMLFormElement) {
   const dates = get<HTMLElement>("[data-booking-dates]");
   const times = get<HTMLElement>("[data-booking-times]");
   const dateStatus = get<HTMLElement>("[data-booking-date-status]");
+  const availabilityContact = get<HTMLAnchorElement>(
+    "[data-booking-availability-contact]",
+  );
   const timeCaption = get<HTMLElement>("[data-booking-times-caption]");
   const timeStatus = get<HTMLElement>("[data-booking-times-status]");
   const submitError = get<HTMLElement>("[data-booking-submit-error]");
@@ -262,6 +270,7 @@ function initialiseBooking(form: HTMLFormElement) {
     renderCalendar();
     renderTimes();
     dateStatus.textContent = "";
+    availabilityContact.hidden = true;
     const service = currentService();
     try {
       if (!api || !service) throw new Error();
@@ -274,8 +283,9 @@ function initialiseBooking(form: HTMLFormElement) {
         signal: controller.signal,
         cache: "no-store",
       });
-      if (!response.ok) throw new Error();
-      const result: unknown = await response.json();
+      const unavailable = response.status === 404;
+      if (!response.ok && !unavailable) throw new Error();
+      const result: unknown = unavailable ? [] : await response.json();
       if (!Array.isArray(result) || !result.every(isSlot)) throw new Error();
       if (controller.signal.aborted) return;
       slots = result;
@@ -296,7 +306,10 @@ function initialiseBooking(form: HTMLFormElement) {
       }
       dateStatus.textContent = first
         ? ""
-        : "No slots fit this group. Try another guest count or session.";
+        : unavailable
+          ? "Online booking is unavailable for this session."
+          : "No slots fit this group. Try another guest count or session.";
+      availabilityContact.hidden = Boolean(first);
     } catch {
       if (!controller.signal.aborted) {
         slots = [];
@@ -343,6 +356,7 @@ function initialiseBooking(form: HTMLFormElement) {
     if (slot && service && count) {
       get("[data-booking-total]").textContent = formatSamplePrice(
         (active === "time" ? undefined : quotedTotal) ??
+          slot.amount ??
           estimatedTotal(service, count),
       );
     }
@@ -591,7 +605,9 @@ function initialiseBooking(form: HTMLFormElement) {
       email: email.value.trim(),
       action: "checkout",
       amount:
-        quotedTotal ?? estimatedTotal(reservation.service, reservation.guests),
+        quotedTotal ??
+        reservation.slot.amount ??
+        estimatedTotal(reservation.service, reservation.guests),
     };
     const fingerprint = JSON.stringify(input);
     if (requestFingerprint !== fingerprint) attempt = crypto.randomUUID();

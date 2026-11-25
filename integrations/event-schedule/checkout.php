@@ -48,10 +48,10 @@ function verifyPreviewSession(Session $session, array $record): void
     }
 }
 
-function reservePreviewSale(string $service, int $guests, string $slot, string $name, string $email, string $attempt): ?Sale
+function reservePreviewSale(array $booking, int $guests, string $slot, string $name, string $email, string $attempt): ?Sale
 {
-    if ($service !== FOREST_SERVICE) {
-        [$status, $result] = reserve($service, $guests, $slot, $name, $email, $attempt, CHECKOUT_WINDOW_MINUTES);
+    if ($booking['kind'] !== 'appointment') {
+        [$status, $result] = reserve($booking, $guests, $slot, $name, $email, $attempt, CHECKOUT_WINDOW_MINUTES);
 
         return $status === 201 ? Sale::query()->findOrFail(UrlUtils::decodeId($result['reference'])) : null;
     }
@@ -61,7 +61,10 @@ function reservePreviewSale(string $service, int $guests, string $slot, string $
     if (!$start || $start->format($pattern) !== $slot || $start->getTimestamp() <= time() + CHECKOUT_WINDOW_MINUTES * 60) {
         return null;
     }
-    $type = forestType();
+    $type = bookingAppointment($booking);
+    if (!$type) {
+        return null;
+    }
     $role = $type->role;
     if (!$role->canCreateEvent($role->user)) {
         return null;
@@ -69,37 +72,40 @@ function reservePreviewSale(string $service, int $guests, string $slot, string $
 
     // The public preview hands off to Stripe directly, so it does not need the appointment API's emailed pay link.
     // Stamp the preview price on the new sale without saving a change to the installed appointment type.
-    $type->price = FOREST_TEST_PRICE;
+    if ($booking['legacy']) {
+        $type->price = FOREST_TEST_PRICE;
+    }
     $type->payment_method = 'stripe';
     try {
         $sale = app(AppointmentService::class)->book($type, $role, [
             'slot' => $slot,
             'name' => $name,
             'email' => $email,
-            'custom_values' => ['0' => $guests],
+            'custom_values' => $booking['legacy'] ? ['0' => $guests] : [],
             'source' => 'api',
         ]);
     } catch (BusinessException) {
         return null;
     }
-    labelForestBooking($sale, $type, $guests);
+    labelAppointmentBooking($sale, $type, $guests);
 
     return $sale;
 }
 
-function startPreviewCheckout(string $service, int $guests, string $slot, string $name, string $email, string $attempt, int $expectedAmount): array
+function startPreviewCheckout(array $booking, int $guests, string $slot, string $name, string $email, string $attempt, int $expectedAmount): array
 {
+    $service = $booking['service'];
     $stripe = previewStripe();
     $cache = Cache::store('database');
     $key = checkoutKey($attempt);
     $fingerprint = hash('sha256', json_encode([$service, $guests, $slot, $name, $email, $expectedAmount], JSON_THROW_ON_ERROR));
 
-    return $cache->lock($key.':lock', 120)->block(5, function () use ($stripe, $cache, $key, $fingerprint, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
+    return $cache->lock($key.':lock', 120)->block(5, function () use ($stripe, $cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
         $record = $cache->get($key);
         if (!$record) {
             try {
-                $record = DB::transaction(function () use ($cache, $key, $fingerprint, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
-                    $sale = reservePreviewSale($service, $guests, $slot, $name, $email, $attempt);
+                $record = DB::transaction(function () use ($cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
+                    $sale = reservePreviewSale($booking, $guests, $slot, $name, $email, $attempt);
                     if (!$sale) {
                         return null;
                     }
@@ -117,7 +123,7 @@ function startPreviewCheckout(string $service, int $guests, string $slot, string
                     $start = $sale->event->getStartDateTime($date, true, BOOKING_TIMEZONE);
                     $sale->payment_method = 'stripe';
                     $sale->save();
-                    $product = match ($service) {
+                    $product = !$booking['legacy'] ? $booking['label'] : match ($service) {
                         'communal' => 'Hot Rocks communal sauna',
                         FOREST_SERVICE => 'Forest View private sauna',
                         PACKAGE_SERVICE => 'Sauna and steak for two',
