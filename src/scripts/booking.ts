@@ -109,6 +109,19 @@ function initialiseBooking(form: HTMLFormElement) {
   const next = get<HTMLButtonElement>("[data-booking-next]");
   const name = get<HTMLInputElement>("#booking-name");
   const email = get<HTMLInputElement>("#booking-email");
+  const fieldStatus = get<HTMLElement>("[data-booking-field-status]");
+  const guestFields = [
+    {
+      input: name,
+      error: get<HTMLElement>("#booking-name-error"),
+      missingMessage: "Enter your full name.",
+    },
+    {
+      input: email,
+      error: get<HTMLElement>("#booking-email-error"),
+      missingMessage: "Enter your email address.",
+    },
+  ];
   const progress = get<HTMLElement>(".booking-progress");
 
   let active: Step = "session";
@@ -392,6 +405,7 @@ function initialiseBooking(form: HTMLFormElement) {
     get<HTMLButtonElement>('[data-booking-action="back"]').hidden =
       step === "session";
     next.textContent = nextLabel[step];
+    next.formNoValidate = step === "details";
     next.disabled =
       step === "time" ? !selectedSlot : step === "session" && !services.length;
     if (step === "review")
@@ -412,6 +426,37 @@ function initialiseBooking(form: HTMLFormElement) {
     show(step);
     if (step === "time") void loadAvailability(selection?.slot);
   }
+
+  function setGuestError(field: (typeof guestFields)[number], message: string) {
+    const { input, error } = field;
+    if (error.textContent !== message) error.textContent = message;
+    error.hidden = !message;
+    if (message) input.setAttribute("aria-invalid", "true");
+    else input.removeAttribute("aria-invalid");
+  }
+
+  function checkGuestField(field: (typeof guestFields)[number]) {
+    const { input, missingMessage } = field;
+    let message = "";
+    if (!input.value.trim()) message = missingMessage;
+    else if (input === email && !email.validity.valid) {
+      message = "Enter a valid email address, such as name@domain.com.";
+    }
+    setGuestError(field, message);
+    return Boolean(message);
+  }
+
+  for (const field of guestFields) {
+    field.input.addEventListener("input", () => {
+      fieldStatus.textContent = "";
+      if (field.input.hasAttribute("aria-invalid")) checkGuestField(field);
+    });
+  }
+
+  form.addEventListener("reset", () => {
+    fieldStatus.textContent = "";
+    for (const field of guestFields) setGuestError(field, "");
+  });
 
   form.addEventListener("change", (event) => {
     const target = event.target;
@@ -710,6 +755,17 @@ function initialiseBooking(form: HTMLFormElement) {
       quotedTotal = undefined;
       show("details");
     } else if (active === "details" && selection) {
+      const [firstInvalid] = guestFields.filter(checkGuestField);
+      if (firstInvalid) {
+        if (document.activeElement === firstInvalid.input) {
+          fieldStatus.textContent = firstInvalid.error.textContent;
+        } else {
+          fieldStatus.textContent = "";
+          firstInvalid.input.focus();
+        }
+        return;
+      }
+      fieldStatus.textContent = "";
       submitError.hidden = true;
       show("review");
     } else if (active === "review" && selection) {

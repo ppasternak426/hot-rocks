@@ -275,9 +275,15 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
                   name="full-name"
                   type="text"
                   autocomplete="name"
+                  aria-describedby="booking-name-error"
                   required
                   maxlength="100"
                 />
+                <p
+                  class="booking-field-error"
+                  id="booking-name-error"
+                  hidden
+                ></p>
               </div>
               <div class="booking-field">
                 <label for="booking-email">Email address</label>
@@ -288,11 +294,19 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
                   autocomplete="email"
                   autocapitalize="none"
                   spellcheck="false"
+                  aria-describedby="booking-email-error"
                   required
+                  pattern=".+@.+\..+"
                   maxlength="254"
                 />
+                <p
+                  class="booking-field-error"
+                  id="booking-email-error"
+                  hidden
+                ></p>
               </div>
             </div>
+            <p class="sr-only" role="status" data-booking-field-status></p>
           </fieldset>
 
           <fieldset
