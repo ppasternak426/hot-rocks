@@ -136,7 +136,7 @@ export async function getVisitSettings() {
   };
 }
 
-export async function getHomeContent() {
+async function fetchHomeContent() {
   return homeSchema.parse(
     await fetchContent(
       "homeContent",
@@ -146,6 +146,14 @@ export async function getHomeContent() {
       visitBackground.asset-> != null => { visitBackground ${backgroundPhotoProjection} } }`,
     ),
   );
+}
+
+let publishedHomeContent: ReturnType<typeof fetchHomeContent> | undefined;
+
+export function getHomeContent() {
+  return import.meta.env.PROD
+    ? (publishedHomeContent ??= fetchHomeContent())
+    : fetchHomeContent();
 }
 
 export async function getAboutContent() {

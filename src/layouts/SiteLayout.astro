@@ -4,11 +4,11 @@ import { getImage } from "astro:assets";
 import headingFontUrl from "../assets/fonts/cormorant-garamond.woff2?url";
 import bodyFontUrl from "../assets/fonts/dm-sans.woff2?url";
 import logo from "../assets/home/hot-rocks-logo.webp";
-import sharingPhoto from "../assets/home/lough-neagh-sauna.jpg";
+import fallbackSharingPhoto from "../assets/home/lough-neagh-sauna.jpg";
 import PageTransitions from "../components/PageTransitions.astro";
 import SocialIcon from "../components/SocialIcon.astro";
 import { liveSite } from "../data/sauna";
-import { getVisitSettings } from "../data/site-content";
+import { getHomeContent, getVisitSettings } from "../data/site-content";
 import "../styles/global.css";
 
 interface Props {
@@ -18,8 +18,15 @@ interface Props {
 }
 
 const { title, description, noindex = false } = Astro.props;
-const { contactEmail, phoneInternational, postalAddress, socialProfiles } =
-  await getVisitSettings();
+const [
+  { contactEmail, phoneInternational, postalAddress, socialProfiles },
+  heroPhoto,
+] = await Promise.all([
+  getVisitSettings(),
+  getHomeContent()
+    .then(({ photo }) => photo)
+    .catch(() => undefined),
+]);
 const currentPath =
   Astro.url.pathname.slice(siteBase.length).replace(/\/$/, "") || "/";
 const siteName = "The Hot Rocks Sauna";
@@ -30,14 +37,23 @@ const canonicalUrl = new URL(
   sitePath(currentPath === "/404" ? "/404.html" : pagePath),
   homeUrl,
 ).href;
-const sharingImage = await getImage({
-  src: sharingPhoto,
-  width: 1200,
-  height: 630,
-  fit: "cover",
-  format: "jpeg",
-});
-const sharingImageUrl = new URL(sharingImage.src, homeUrl).href;
+const sharingImageWidth = 1200;
+const sharingImageHeight = 630;
+const sharingImageSrc = heroPhoto
+  ? `${heroPhoto.url}?w=${sharingImageWidth}&h=${sharingImageHeight}&fit=crop&fm=jpg`
+  : (
+      await getImage({
+        src: fallbackSharingPhoto,
+        width: sharingImageWidth,
+        height: sharingImageHeight,
+        fit: "cover",
+        format: "jpeg",
+      })
+    ).src;
+const sharingImageUrl = new URL(sharingImageSrc, homeUrl).href;
+const sharingImageAlt =
+  heroPhoto?.alt ??
+  "Inside The Hot Rocks Sauna, with wooden benches and a view of Lough Neagh";
 const business = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
@@ -92,18 +108,9 @@ const legalLinks = [
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={sharingImageUrl} />
     <meta property="og:image:type" content="image/jpeg" />
-    <meta
-      property="og:image:width"
-      content={String(sharingImage.attributes.width)}
-    />
-    <meta
-      property="og:image:height"
-      content={String(sharingImage.attributes.height)}
-    />
-    <meta
-      property="og:image:alt"
-      content="Inside The Hot Rocks Sauna, with wooden benches and a view of Lough Neagh"
-    />
+    <meta property="og:image:width" content={String(sharingImageWidth)} />
+    <meta property="og:image:height" content={String(sharingImageHeight)} />
+    <meta property="og:image:alt" content={sharingImageAlt} />
     {currentPath === "/" && (
       <script
         type="application/ld+json"
