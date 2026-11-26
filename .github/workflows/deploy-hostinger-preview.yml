@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PREVIEW_DOMAIN: tender-palegoldenrod-porcupine-90.hostingersite.com
+  PREVIEW_DOMAIN: preview.thehotrockssauna.co.uk
   PUBLIC_BOOKING_API_URL: https://aquatic-paleturquoise-albatross-43.hostingersite.com/hot-rocks-booking.php
 
 jobs:

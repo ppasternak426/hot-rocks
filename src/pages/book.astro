@@ -35,6 +35,13 @@ const bookingApi = import.meta.env.PUBLIC_BOOKING_API_URL;
   <div class="wrap booking-page">
     <header class="booking-intro">
       <h1>Book a sauna session</h1>
+      {bookingApi &&
+        Astro.site?.hostname === "preview.thehotrockssauna.co.uk" && (
+          <p>
+            This preview uses test bookings. It won’t reserve a real sauna
+            session.
+          </p>
+        )}
     </header>
 
     <noscript>

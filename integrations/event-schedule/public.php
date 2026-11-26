@@ -219,10 +219,10 @@ header('Cache-Control: no-store');
 header('X-Robots-Tag: noindex, nofollow');
 header('Vary: Origin');
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if ($origin !== PREVIEW_ORIGIN) {
+if (!in_array($origin, PREVIEW_ORIGINS, true)) {
     sendJson(['error' => 'Open the Hot Rocks booking preview to continue.'], 403);
 }
-header('Access-Control-Allow-Origin: '.PREVIEW_ORIGIN);
+header('Access-Control-Allow-Origin: '.$origin);
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -288,7 +288,7 @@ try {
         if (!is_int($amount) || $amount < 0) {
             sendJson(['error' => 'Invalid test checkout.'], 422);
         }
-        [$status, $result] = startPreviewCheckout($booking, $guests, $slot, $name, $email, $attempt, $amount);
+        [$status, $result] = startPreviewCheckout($booking, $guests, $slot, $name, $email, $attempt, $amount, $origin);
         sendJson($result, $status);
     }
     if ($action !== 'reserve' || !$booking['legacy']) {

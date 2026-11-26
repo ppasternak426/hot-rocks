@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 const PREVIEW_ORIGIN = 'https://tender-palegoldenrod-porcupine-90.hostingersite.com';
+const PREVIEW_ORIGINS = [PREVIEW_ORIGIN, 'https://preview.thehotrockssauna.co.uk'];
 const PREVIEW_HOST = 'aquatic-paleturquoise-albatross-43.hostingersite.com';
 const BOOKING_TIMEZONE = 'Europe/London';
 const SHARED_SCHEDULE = 'hot-rocks-sauna-preview';

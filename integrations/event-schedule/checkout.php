@@ -92,7 +92,7 @@ function reservePreviewSale(array $booking, int $guests, string $slot, string $n
     return $sale;
 }
 
-function startPreviewCheckout(array $booking, int $guests, string $slot, string $name, string $email, string $attempt, int $expectedAmount): array
+function startPreviewCheckout(array $booking, int $guests, string $slot, string $name, string $email, string $attempt, int $expectedAmount, string $origin = PREVIEW_ORIGIN): array
 {
     $service = $booking['service'];
     $stripe = previewStripe();
@@ -100,11 +100,11 @@ function startPreviewCheckout(array $booking, int $guests, string $slot, string 
     $key = checkoutKey($attempt);
     $fingerprint = hash('sha256', json_encode([$service, $guests, $slot, $name, $email, $expectedAmount], JSON_THROW_ON_ERROR));
 
-    return $cache->lock($key.':lock', 120)->block(5, function () use ($stripe, $cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
+    return $cache->lock($key.':lock', 120)->block(5, function () use ($stripe, $cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount, $origin) {
         $record = $cache->get($key);
         if (!$record) {
             try {
-                $record = DB::transaction(function () use ($cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount) {
+                $record = DB::transaction(function () use ($cache, $key, $fingerprint, $booking, $service, $guests, $slot, $name, $email, $attempt, $expectedAmount, $origin) {
                     $sale = reservePreviewSale($booking, $guests, $slot, $name, $email, $attempt);
                     if (!$sale) {
                         return null;
@@ -131,6 +131,7 @@ function startPreviewCheckout(array $booking, int $guests, string $slot, string 
                     };
                     $record = [
                         'fingerprint' => $fingerprint,
+                        'origin' => $origin,
                         'sale' => $sale->id,
                         'reference' => UrlUtils::encodeId($sale->id),
                         'product' => $product.' (test booking)',
@@ -151,7 +152,7 @@ function startPreviewCheckout(array $booking, int $guests, string $slot, string 
                 return [409, []];
             }
         }
-        if ($record['fingerprint'] !== $fingerprint) {
+        if ($record['fingerprint'] !== $fingerprint || ($record['origin'] ?? PREVIEW_ORIGIN) !== $origin) {
             return [422, []];
         }
 
@@ -161,7 +162,7 @@ function startPreviewCheckout(array $booking, int $guests, string $slot, string 
             if ($record['expires'] <= time() + 31 * 60) {
                 return [409, ['checkoutExpired' => true]];
             }
-            $return = PREVIEW_ORIGIN.'/book/?booking='.$attempt.'&checkout=';
+            $return = $origin.'/book/?booking='.$attempt.'&checkout=';
             $session = $stripe->checkout->sessions->create([
                 'mode' => 'payment',
                 'payment_method_types' => ['card'],
