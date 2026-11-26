@@ -33,6 +33,7 @@ Open [Sanity Studio](http://localhost:3333/) and sign in with a Sanity account t
 
 - Build the website from the repository root with `bun run build` and publish the root `dist/` directory.
 - To publish the editor to Sanity hosting, run `bun run deploy` from `studio/` while signed in. This deploys the Studio and its schema separately from Astro.
+- The current custom-domain Studio is hosted on Hostinger. Use the [maintenance guide](docs/maintenance.md) for its build and hosting configuration.
 - Publishing content in Studio takes effect on the public site after the next Astro build and deployment. Once a site host is selected, connect its production deploy hook to a Sanity webhook for create, update and delete events in the `production` dataset. Filter out drafts and keep the deploy-hook URL in Sanity webhook settings.
 - Verify the webhook on the deployed redesign by publishing an approved edit, checking that the host completes a fresh build, and confirming the resulting public content. A homepage featured selection should appear in precisely the order set in Studio.
 - Serve Astro’s generated `404.html` with HTTP 404 for missing routes. Configure a permanent host redirect from `/about-us/` to `/sessions/` if supported. The static build also includes a redirect page.
@@ -45,6 +46,7 @@ Build with `bun run build --site https://ppasternak426.github.io --base /hot-roc
 
 - [Agent instructions](AGENTS.md)
 - [Project brief and open questions](docs/project-brief.md)
+- [Maintenance and integration context](docs/maintenance.md)
 - [Project skills](.agents/skills/)
 
-Editorial content lives in Sanity. Booking and payment integration have not yet been implemented or verified.
+Editorial content lives in Sanity. The repository includes an Event Schedule booking preview and Stripe checkout integration; their deployed configuration and end-to-end behavior require verification. See the maintenance guide before making changes.

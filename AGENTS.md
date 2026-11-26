@@ -4,11 +4,13 @@
 
 Redesign https://thehotrockssauna.co.uk/ for mobile and desktop. This repository is an Astro + TypeScript + Bun + Tailwind CSS foundation; it is not yet the finished site. Read `docs/project-brief.md` before making product or content decisions.
 
+Read `docs/maintenance.md` for the current integration and deployment context. Update it when the setup or maintenance procedures change, and label unverified details.
+
 ## Working conventions
 
 - Consult the user on meaningful design, architecture, tooling and product decisions. Do not treat proposals in the brief as approved designs or verified business facts.
 - Use Bun and keep `bun.lock` in sync. Use Astro components and static rendering by default; add client JavaScript or a UI framework only when needed and agreed.
-- Keep content separate from presentation so a CMS can be introduced later. Do not add a CMS until requested.
+- Keep content separate from presentation. The project uses Sanity; consult the user before introducing another CMS or making meaningful architecture changes.
 - Prioritize semantic HTML, keyboard access, visible focus, adequate contrast, reduced motion and responsive layouts. Verify UI on both mobile and desktop.
 - For UI and UX work, apply the project `frontend-design` skill's principles throughout. Use `impeccable` for defining or refining the brief and reviewing the result; keep the user's agreed direction and project requirements authoritative if guidance overlaps or conflicts. Consult the user on meaningful visual choices before implementing them.
 - Use real, authorized imagery and confirmed business information. Never invent testimonials, availability, prices or medical claims.
