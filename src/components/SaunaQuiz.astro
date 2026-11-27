@@ -86,7 +86,7 @@ import { saunaQuiz } from "../data/sauna-benefits";
             <ul class="quiz-sources" role="list">
               {round.sources.map(({ label, href }) => (
                 <li>
-                  <a class="text-link" href={href}>
+                  <a class="text-link text-link-plain" href={href}>
                     <span>{label}</span>
                   </a>
                 </li>
@@ -219,21 +219,6 @@ import { saunaQuiz } from "../data/sauna-benefits";
 
   .quiz-sources {
     margin-block-start: 0.25rem;
-  }
-
-  .quiz-sources .text-link[href] {
-    padding-inline: 0;
-    border: 0;
-    border-radius: 0;
-  }
-
-  .quiz-sources .text-link[href]:is(:hover, :focus-visible) {
-    background-color: transparent;
-  }
-
-  .quiz-sources .text-link span {
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
   }
 
   .quiz-reveal .button,

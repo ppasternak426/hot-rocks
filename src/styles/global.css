@@ -303,6 +303,21 @@ main p + p {
   background-color: color-mix(in srgb, currentColor 14%, transparent);
 }
 
+.text-link-plain[href] {
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.text-link-plain[href]:is(:hover, :focus-visible) {
+  background-color: transparent;
+}
+
+.text-link-plain > span {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
 :where(.booking-text-button, .quiz-reset) {
   padding-inline: 0.75rem;
   border-radius: 0.5rem;

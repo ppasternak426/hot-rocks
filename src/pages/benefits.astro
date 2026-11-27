@@ -31,8 +31,8 @@ const { intro, heading, topics } = await getSaunaBenefitsContent();
             <ul>
               {sources.map(({ href, label }) => (
                 <li>
-                  <a class="text-link" href={href}>
-                    {label}
+                  <a class="text-link text-link-plain" href={href}>
+                    <span>{label}</span>
                   </a>
                 </li>
               ))}
