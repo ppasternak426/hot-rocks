@@ -56,6 +56,8 @@ The default branch is `main`. Run `bun run check` for code changes; follow the a
 
 The workflow `.github/workflows/deploy-hostinger-preview.yml` runs by manual dispatch on `main`. It installs dependencies, builds with published Sanity content, deploys the generated static files to the configured Hostinger preview and checks the homepage and `noindex` header. It expects `HOSTINGER_API_TOKEN` in the GitHub Actions `hostinger-preview` environment. The existing secret worked for the 26 November 2026 rollout. Confirm the target and authorization before running it; monitor the workflow and verify the resulting site. Do not disclose the token.
 
+The preview served the map SVG with a seven-day cache lifetime on 27 November 2026. The Visit page includes a hash of the SVG contents in its image URL so a map edit gets a new cache key after deployment. After deploying a map edit, load `/visit/` and verify the SVG at the exact URL in the rendered page.
+
 `PUBLIC_BOOKING_API_URL` is public Astro build configuration. Switching the preview backend requires a rebuild and a matching origin allowlist in PHP. The rollout verified availability from both allowed origins, rejection of an unrelated origin, and one sandbox checkout created and cancelled from the new address. A completed payment and webhook delivery were outside that check.
 
 On the rollout laptop, Codex’s bundled Node runtime could not load the installed macOS native build dependencies. Using a checksum-verified official Node.js runtime on `PATH` let the frozen Bun installs build both projects without lockfile edits.
